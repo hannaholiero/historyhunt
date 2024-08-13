@@ -1,71 +1,78 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert } from 'react-native';
+import { Button, View, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
+import FormContainer from '../components/FormContainer';
+import FormTextInput from '../components/FormTextInput';
 
 const SignupScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
-    const [firstname, setFirstname] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSignup = async () => {
-        if (!email || !firstname || !password) {
-            Alert.alert('Error!', 'Vänligen fyll i alla fält');
+        if (password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match.');
             return;
         }
+
+        setIsLoading(true);
+
         try {
-            const response = await axios.post(
+            // Hantera användarregistrering via API
+            await axios.post(
                 'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/user.json',
-                { email, firstname, password }
+                { email, password }
             );
-
-            if (response.status === 200) {
-                Alert.alert(
-                    'Grattis!',
-                    'Du är nu med i Huntfamiljen!',
-                    [
-                        { text: 'Logga in', onPress: () => navigation.navigate('Login') }
-
-                    ]
-                );
-            } else {
-                Alert.alert('Error!', 'Något gick fel, försök igen!.');
-            }
+            Alert.alert('Success', 'User registered successfully!');
+            navigation.navigate('Login');
         } catch (error) {
-            if (error.response && error.response.status === 400) {
-                Alert.alert('Error', 'Användaren finns redan.');
-            } else {
-                Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
-            }
+            console.error('Error registering user:', error);
+            Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <TextInput
-                placeholder="Email"
+        <FormContainer>
+            <FormTextInput
+                placeholder="Enter your email"
                 value={email}
                 onChangeText={setEmail}
-                autoCapitalize="none"
                 keyboardType="email-address"
-                style={{ width: '90%', height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10 }}
             />
-            <TextInput
-                placeholder="Name"
-                value={firstname}
-                onChangeText={setFirstname}
-                autoCapitalize="words"
-                style={{ width: '90%', height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10 }}
-            />
-            <TextInput
-                placeholder="Password"
+            <FormTextInput
+                placeholder="Enter your password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={true}
-                style={{ width: '90%', height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10 }}
+                secureTextEntry
             />
-            <Button title="Sign Up" onPress={handleSignup} />
-        </View>
+            <FormTextInput
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+            />
+            <View style={styles.buttonContainer}>
+                <Button title="Sign Up" onPress={handleSignup} disabled={isLoading} />
+            </View>
+            <View style={styles.buttonContainer}>
+                <Button
+                    title="Back to Login"
+                    onPress={() => navigation.navigate('Login')}
+                    disabled={isLoading}
+                />
+            </View>
+        </FormContainer>
     );
 };
+
+const styles = StyleSheet.create({
+    buttonContainer: {
+        marginTop: 10,
+        width: '100%',
+    },
+});
 
 export default SignupScreen;

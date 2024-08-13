@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image } from 'react-native';
-import axios from 'axios'; // Glöm inte att importera axios
+import { View, Text, TextInput, Button, StyleSheet, Alert, Image, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import axios from 'axios';
 const logo = require("../assets/logo.png");
+import FormContainer from '../components/FormContainer';
+import FormTextInput from '../components/FormTextInput';
 
-const LoginScreen = ({ navigation }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // State to handle loading feedback
+const LoginScreen = ({ navigation, onLoginSuccess }) => {
+    const [email, setEmail] = useState('test@test.test');
+    const [password, setPassword] = useState('test');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = async () => {
-        setIsLoading(true); // Start loading
+        setIsLoading(true);
 
         try {
-            // Hämta alla användare
             const response = await axios.get(
                 'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/user.json'
             );
@@ -20,22 +21,19 @@ const LoginScreen = ({ navigation }) => {
             const users = response.data;
             let userFound = false;
 
-            // Iterera över alla användare med for...in loop
             for (const userId in users) {
                 const userData = users[userId];
 
-                // Jämför e-postadressen och lösenordet
                 if (userData.email === email) {
                     userFound = true;
                     if (userData.password === password) {
                         Alert.alert('Success', 'User signed in!');
-                        // Navigera till huvudskärmen eller startskärmen
-                        // navigation.navigate('Home'); // Förutsätter att du har en skärm som heter "Home"
-                        console.log("Success");
-                        break; // Avsluta loopen när rätt användare har loggats in
+                        onLoginSuccess(); // Uppdatera autentiseringsstatus
+                        navigation.navigate('Home');
+                        break;
                     } else {
                         Alert.alert('Error', 'Incorrect password.');
-                        break; // Avsluta loopen när lösenordet är fel
+                        break;
                     }
                 }
             }
@@ -44,70 +42,56 @@ const LoginScreen = ({ navigation }) => {
                 Alert.alert('Error', 'User not found.');
             }
         } catch (error) {
-            console.error('Error fetching user:', error); // Logga felmeddelandet
+            console.error('Error fetching user:', error);
             Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
         } finally {
-            setIsLoading(false); // Stop loading
+            setIsLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Hannahs History Hunt</Text>
-            <Image source={logo} style={styles.image} resizeMode='contain' />
-            <Text style={styles.text}>Logga in</Text>
-            <TextInput
-                style={styles.input}
-                onChangeText={setEmail}
-                value={email}
+        <FormContainer>
+            <View style={styles.logoContainer}>
+                <Image source={logo} style={styles.image} resizeMode='contain' />
+            </View>
+            <FormTextInput
                 placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
                 keyboardType="email-address"
-                autoCapitalize="none" // Se till att detta är inställt för att undvika oönskad kapitalisering
-                autoCorrect={false}
             />
-            <TextInput
-                style={styles.input}
-                onChangeText={setPassword}
-                value={password}
+            <FormTextInput
                 placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry
             />
-            <Button title="Log In" onPress={handleLogin} disabled={isLoading} />
-            <Button
-                title="Gå till Registrering"
-                onPress={() => navigation.navigate('Signup')}
-                disabled={isLoading}
-            />
-        </View>
+            <View style={styles.buttonContainer}>
+                <Button title="Log In" onPress={handleLogin} disabled={isLoading} />
+            </View>
+            <View style={styles.buttonContainer}>
+                <Button
+                    title="Gå till Registrering"
+                    onPress={() => navigation.navigate('Signup')}
+                    disabled={isLoading}
+                />
+            </View>
+        </FormContainer>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
+    logoContainer: {
         alignItems: 'center',
-        padding: 20,
-        backgroundColor: "#fbf5e9",
-    },
-    title: {
-        fontSize: 24,
-    },
-    text: {
-        fontSize: 20,
         marginBottom: 20,
     },
-    input: {
-        width: '100%',
-        marginVertical: 10,
-        padding: 10,
-        borderWidth: 1,
-        borderRadius: 5,
-        borderColor: 'grey',
-    },
     image: {
-        width: '50%',
-        height: '50%',
+        width: 150,
+        height: 150,
+    },
+    buttonContainer: {
+        marginTop: 10,
+        width: '100%',
     },
 });
 

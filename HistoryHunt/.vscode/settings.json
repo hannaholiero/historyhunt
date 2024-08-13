@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        "**/*.ts": true,
+        "**/*.tsx": true
+    },
+    "typescript.validate.enable": false,
+    "javascript.validate.enable": true
+}
