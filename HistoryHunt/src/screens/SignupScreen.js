@@ -1,77 +1,58 @@
 import React, { useState } from 'react';
-import { Button, View, StyleSheet, Alert } from 'react-native';
-import axios from 'axios';
-import FormContainer from '../components/FormContainer';
-import FormTextInput from '../components/FormTextInput';
+import { View, TextInput, Button, StyleSheet } from 'react-native';
 
 const SignupScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSignup = async () => {
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match.');
-            return;
-        }
-
-        setIsLoading(true);
-
-        try {
-            // Hantera användarregistrering via API
-            await axios.post(
-                'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/user.json',
-                { email, password }
-            );
-            Alert.alert('Success', 'User registered successfully!');
-            navigation.navigate('Login');
-        } catch (error) {
-            console.error('Error registering user:', error);
-            Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
-        } finally {
-            setIsLoading(false);
-        }
+    const handleSignup = () => {
+        // Här kan du implementera signup-logik om du vill, t.ex. spara användaren i en databas.
+        // För enkelhetens skull navigerar vi bara tillbaka till Login-skärmen.
+        navigation.navigate('Login');
     };
 
     return (
-        <FormContainer>
-            <FormTextInput
-                placeholder="Enter your email"
+        <View style={styles.container}>
+            <TextInput
+                style={styles.input}
+                placeholder="Name"
+                value={name}
+                onChangeText={setName}
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
             />
-            <FormTextInput
-                placeholder="Enter your password"
+            <TextInput
+                style={styles.input}
+                placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <FormTextInput
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-            />
-            <View style={styles.buttonContainer}>
-                <Button title="Sign Up" onPress={handleSignup} disabled={isLoading} />
-            </View>
-            <View style={styles.buttonContainer}>
-                <Button
-                    title="Back to Login"
-                    onPress={() => navigation.navigate('Login')}
-                    disabled={isLoading}
-                />
-            </View>
-        </FormContainer>
+            <Button title="Sign Up" onPress={handleSignup} />
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    buttonContainer: {
-        marginTop: 10,
-        width: '100%',
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 16,
+        backgroundColor: '#f0f0f0',
+    },
+    input: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        marginBottom: 12,
+        paddingHorizontal: 8,
+        backgroundColor: '#fff',
     },
 });
 
