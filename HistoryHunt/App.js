@@ -9,6 +9,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import CreateHuntScreen from './src/screens/CreateHuntScreen';
 import InvitePlayersScreen from './src/screens/InvitePlayersScreen';
 import CreateHuntMapScreen from './src/screens/CreateHuntMapScreen';
+import ConfirmHuntScreen from './src/screens/ConfirmHuntScreen';
 
 const Stack = createStackNavigator();
 
@@ -21,6 +22,7 @@ const App = () => (
       <Stack.Screen name="CreateHunt" component={CreateHuntScreen} />
       <Stack.Screen name="InvitePlayers" component={InvitePlayersScreen} />
       <Stack.Screen name="CreateHuntMap" component={CreateHuntMapScreen} />
+      <Stack.Screen name="ConfirmHunt" component={ConfirmHuntScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );
