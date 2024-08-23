@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { Button, View, StyleSheet, TouchableOpacity, Text, Image, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, TextInput, Text, Button, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import FormContainer from '../components/FormContainer';
-import FormTextInput from '../components/FormTextInput';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, push, set } from 'firebase/database';
+import { storage, database } from '../../firebaseConfig';
 
-const CreateHuntScreen = ({ navigation }) => {
-    const [huntName, setHuntName] = useState('');
+export default function CreateHuntScreen({ navigation }) {
+    const [huntTitle, setHuntTitle] = useState('');
     const [estimatedTime, setEstimatedTime] = useState('');
-    const [huntImage, setHuntImage] = useState(null);
+    const [image, setImage] = useState(null);
 
-    const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
+    const handleImagePick = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'We need access to your camera roll to upload images.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
@@ -19,66 +25,111 @@ const CreateHuntScreen = ({ navigation }) => {
         });
 
         if (!result.canceled) {
-            setHuntImage(result.assets[0].uri);
+            setImage(result.assets[0].uri);
         }
     };
 
-    const handleContinue = () => {
-        if (!huntName || !estimatedTime || !huntImage) {
-            Alert.alert('Error', 'Please fill in all fields and add an image.');
+    const handleCreateHunt = async () => {
+        if (!huntTitle || !estimatedTime) {
+            Alert.alert('Missing Information', 'Please provide both a title and estimated time.');
             return;
         }
 
-        navigation.navigate('InvitePlayers', { huntName, estimatedTime, huntImage });
+        let uploadedImageUrl = '';
+
+        if (image) {
+            const imageResponse = await fetch(image);
+            const imageBlob = await imageResponse.blob();
+            const imageRef = ref(storage, `hunts/${Date.now()}.jpg`);
+
+            try {
+                await uploadBytes(imageRef, imageBlob);
+                uploadedImageUrl = await getDownloadURL(imageRef);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                Alert.alert('Error', 'Failed to upload image. Please try again.');
+                return;
+            }
+        } else {
+            // Fallback to a default image URL if none is selected by the user
+            uploadedImageUrl = 'https://example.com/default-image.jpg'; // Replace with your own default image URL
+        }
+
+        try {
+            const newHuntRef = push(dbRef(database, 'hunts'));
+            await set(newHuntRef, {
+                huntTitle: huntTitle.trim(),
+                estimatedTime: estimatedTime.trim(),
+                huntImage: uploadedImageUrl,
+                participants: [],
+                completedBy: [],
+            });
+
+            navigation.navigate('CreateHuntMap', {
+                huntTitle,
+                estimatedTime,
+                huntId: newHuntRef.key,
+                huntImage: uploadedImageUrl,
+            });
+        } catch (error) {
+            console.error('Error creating hunt:', error);
+            Alert.alert('Error', 'An error occurred while creating the hunt.');
+        }
     };
 
     return (
-        <FormContainer>
-            <FormTextInput
-                placeholder="Hunt Name"
-                value={huntName}
-                onChangeText={setHuntName}
+        <View style={styles.container}>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter hunt title"
+                value={huntTitle}
+                onChangeText={setHuntTitle}
             />
-            <FormTextInput
-                placeholder="Estimated Time (e.g., 2 hours)"
+            <TextInput
+                style={styles.input}
+                placeholder="Enter estimated time"
                 value={estimatedTime}
                 onChangeText={setEstimatedTime}
                 keyboardType="numeric"
             />
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-                {huntImage ? (
-                    <Image source={{ uri: huntImage }} style={styles.image} />
+
+            <TouchableOpacity style={styles.imagePicker} onPress={handleImagePick}>
+                {image ? (
+                    <Image source={{ uri: image }} style={styles.imagePreview} />
                 ) : (
-                    <Ionicons name="image" size={100} color="gray" />
+                    <Text style={styles.imagePlaceholderText}>Pick an Image</Text>
                 )}
-                <Text style={styles.imagePickerText}>Insert Image</Text>
             </TouchableOpacity>
-            <View style={styles.buttonContainer}>
-                <Button title="Continue" onPress={handleContinue} />
-            </View>
-        </FormContainer>
+
+            <Button title="Create Hunt" onPress={handleCreateHunt} />
+        </View>
     );
-};
+}
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: '#f5f5f5',
+    },
+    input: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        marginBottom: 12,
+        paddingHorizontal: 8,
+    },
     imagePicker: {
-        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 30,
+        justifyContent: 'center',
+        marginVertical: 16,
     },
-    imagePickerText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: 'gray',
+    imagePlaceholderText: {
+        color: '#888',
     },
-    image: {
-        width: 100,
-        height: 100,
-        borderRadius: 8,
-    },
-    buttonContainer: {
-        marginTop: 20,
+    imagePreview: {
+        width: 200,
+        height: 200,
+        borderRadius: 100,
     },
 });
-
-export default CreateHuntScreen;

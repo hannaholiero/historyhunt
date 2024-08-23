@@ -1,24 +1,53 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignupScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
-    const [name, setName] = useState('');
+    const [firstname, setFirstname] = useState('');
+    const [lastname, setLastname] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSignup = () => {
-        // Här kan du implementera signup-logik om du vill, t.ex. spara användaren i en databas.
-        // För enkelhetens skull navigerar vi bara tillbaka till Login-skärmen.
-        navigation.navigate('Login');
+    const handleSignup = async () => {
+        try {
+            const response = await axios.post(
+                'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users.json',
+                {
+                    email,
+                    firstname,
+                    lastname,
+                    password,
+                    activeHunts: {},
+                    plannedHunts: {},
+                    invitedHunts: {},
+                    completedHunts: {},
+                }
+            );
+
+            const userId = response.data.name;
+            await AsyncStorage.setItem('userId', userId);
+            Alert.alert('Success', 'User registered successfully!');
+            navigation.navigate('Login');
+        } catch (error) {
+            console.error('Error registering user:', error);
+            Alert.alert('Error', 'An unexpected error occurred. Please try again later.');
+        }
     };
 
     return (
         <View style={styles.container}>
             <TextInput
                 style={styles.input}
-                placeholder="Name"
-                value={name}
-                onChangeText={setName}
+                placeholder="First Name"
+                value={firstname}
+                onChangeText={setFirstname}
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={lastname}
+                onChangeText={setLastname}
             />
             <TextInput
                 style={styles.input}
@@ -44,7 +73,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 16,
-        backgroundColor: '#f0f0f0',
     },
     input: {
         height: 40,
@@ -52,7 +80,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         marginBottom: 12,
         paddingHorizontal: 8,
-        backgroundColor: '#fff',
     },
 });
 

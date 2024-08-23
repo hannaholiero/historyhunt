@@ -1,46 +1,70 @@
-import React from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import HuntItem from '../components/HuntItem';
+import CustomButton from '../components/CustomButton';
+import UserProfile from '../components/UserProfile'; // Importera UserProfile-komponenten
+import { Colors } from '../constants/styles';
 
 const HomeScreen = ({ navigation }) => {
-    const userImage = 'https://cdn-icons-png.flaticon.com/512/17/17004.png';
-    const activeHunts = [{ id: '1', title: 'Active Hunt 1' }];
-    const plannedHunts = [{ id: '2', title: 'Planned Hunt 1' }];
-    const completedHunts = [{ id: '3', title: 'Completed Hunt 1' }];
+    const [userData, setUserData] = useState(null);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userId = await AsyncStorage.getItem('userId');
+
+                if (!userId) {
+                    Alert.alert('Error', 'User not found.');
+                    return;
+                }
+
+                const response = await axios.get(
+                    `https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users/${userId}.json`
+                );
+
+                setUserData(response.data);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                Alert.alert('Error', 'Failed to load user data.');
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     return (
         <View style={styles.container}>
-            <Image source={{ uri: userImage }} style={styles.avatar} />
-            <Text style={styles.sectionTitle}>Active Hunts</Text>
-            <FlatList
-                data={activeHunts}
-                renderItem={({ item }) => (
-                    <View style={styles.huntItem}>
-                        <Text>{item.title}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id}
-            />
-            <Text style={styles.sectionTitle}>Planned Hunts</Text>
-            <FlatList
-                data={plannedHunts}
-                renderItem={({ item }) => (
-                    <View style={styles.huntItem}>
-                        <Text>{item.title}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id}
-            />
-            <Button title="Create Hunt" onPress={() => navigation.navigate('CreateHunt')} />
-            <Text style={styles.sectionTitle}>Medals</Text>
-            <FlatList
-                data={completedHunts}
-                renderItem={({ item }) => (
-                    <View style={styles.huntItem}>
-                        <Text>{item.title}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id}
-            />
+            {userData && (
+                <>
+                    {/* Visa användarnamn och avatarbild */}
+                    <UserProfile
+                        username={userData.firstname || 'User'}
+                        image={userData.profileImage || 'https://cdn-icons-png.flaticon.com/512/17/17004.png'}
+                    />
+
+                    <Text style={styles.sectionTitle}>Invited Hunts</Text>
+                    <FlatList
+                        data={Object.values(userData.invitedHunts || {})}
+                        renderItem={({ item }) => <HuntItem title={item.huntName} />}
+                        keyExtractor={(item, index) => index.toString()}
+                    />
+                    <Text style={styles.sectionTitle}>Active Hunts</Text>
+                    <FlatList
+                        data={Object.values(userData.activeHunts || {})}
+                        renderItem={({ item }) => <HuntItem title={item.huntName} />}
+                        keyExtractor={(item, index) => index.toString()}
+                    />
+                    <Text style={styles.sectionTitle}>Planned Hunts</Text>
+                    <FlatList
+                        data={Object.values(userData.plannedHunts || {})}
+                        renderItem={({ item }) => <HuntItem title={item.huntName} />}
+                        keyExtractor={(item, index) => index.toString()}
+                    />
+                    <CustomButton title="Create Hunt" onPress={() => navigation.navigate('CreateHunt')} />
+                </>
+            )}
         </View>
     );
 };
@@ -49,25 +73,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#f5f5f5',
-    },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        alignSelf: 'center',
-        marginBottom: 20,
+        backgroundColor: Colors.primary100,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
-    },
-    huntItem: {
-        padding: 10,
-        backgroundColor: '#e0e0e0',
-        borderRadius: 8,
-        marginBottom: 10,
+        color: Colors.primary800,
     },
 });
 
