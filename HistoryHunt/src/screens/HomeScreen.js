@@ -1,35 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebaseConfig';
 import CustomButton from '../components/CustomButton';
-
-const HuntItem = React.memo(({ item, onPress }) => {
-    return (
-        <TouchableOpacity style={styles.huntItem} onPress={() => onPress(item)}>
-            <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
-            <View>
-                <Text style={styles.huntTitle}>{item.huntTitle || item.huntName || "Untitled Hunt"}</Text>
-                <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
-            </View>
-        </TouchableOpacity>
-    );
-});
+import { MaterialIcons } from '@expo/vector-icons'; // För penna-ikonen
 
 const HomeScreen = ({ navigation }) => {
     const [plannedHunts, setPlannedHunts] = useState([]);
     const [activeHunts, setActiveHunts] = useState([]);
     const [completedHunts, setCompletedHunts] = useState([]);
     const [userFirstName, setUserFirstName] = useState('');
-    const [userId, setUserId] = useState('');
+    const [profilePicture, setProfilePicture] = useState(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
             const storedUserId = await AsyncStorage.getItem('userId');
             const firstname = await AsyncStorage.getItem('firstname');
             setUserFirstName(firstname);
-            setUserId(storedUserId);
 
             if (storedUserId) {
                 const plannedHuntsRef = ref(database, `users/${storedUserId}/plannedHunts`);
@@ -61,36 +49,29 @@ const HomeScreen = ({ navigation }) => {
                     }));
                     setCompletedHunts(formattedCompletedHunts);
                 });
+
+                // Hämta profilbilden
+                const profilePictureRef = ref(database, `users/${storedUserId}/profilePicture`);
+                onValue(profilePictureRef, (snapshot) => {
+                    const uri = snapshot.val();
+                    if (uri) {
+                        setProfilePicture(uri);
+                    }
+                });
             }
         };
 
         fetchUserData();
     }, []);
 
-    // const handleHuntPress = useCallback((item) => {
-    //     console.log("Hunt data sent to ConfirmHuntScreen:", item);
-    //     navigation.navigate('ConfirmHunt', {
-    //         huntId: item.huntId,
-    //         huntTitle: item.huntTitle || item.huntName,
-    //         estimatedTime: item.estimatedTime,
-    //         huntImage: item.huntImage,
-    //         location: item.location,
-    //         createdBy: item.createdBy,
-    //     });
-    // }, [navigation]);
-
-    const handleHuntPress = useCallback((item) => {
-        console.log("Sending hunt to ConfirmHuntScreen:", item);
-        navigation.navigate('ConfirmHunt', {
-            hunt: item,
-        });
-    }, [navigation]);
-
+    const handleProfilePress = () => {
+        navigation.navigate('Profile');
+    };
 
     const renderMedalItem = ({ item }) => (
         <TouchableOpacity
             style={styles.medalItem}
-            onPress={() => navigation.navigate('FinishedHunt', {
+            onPress={() => navigation.navigate('FinishedGame', {
                 hunt: item,
                 photoUri: item.photoUri
             })}
@@ -103,15 +84,26 @@ const HomeScreen = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <View style={styles.profileContainer}>
+                <TouchableOpacity onPress={handleProfilePress} style={styles.profileImageContainer}>
+                    <Image style={styles.profileImage} source={{ uri: profilePicture || 'https://via.placeholder.com/150' }} />
+                    <View style={styles.editIconContainer}>
+                        <MaterialIcons name="edit" size={24} color="white" />
+                    </View>
+                </TouchableOpacity>
                 <Text style={styles.profileName}>{userFirstName}</Text>
-                <Image style={styles.profileImage} source={{ uri: 'https://via.placeholder.com/150' }} />
             </View>
 
             <Text style={styles.sectionTitle}>Active Hunts</Text>
             <FlatList
                 data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName)}
                 renderItem={({ item }) => (
-                    <HuntItem item={item} onPress={handleHuntPress} />
+                    <TouchableOpacity style={styles.huntItem} onPress={() => navigation.navigate('ConfirmHunt', { hunt: item })}>
+                        <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+                        <View>
+                            <Text style={styles.huntTitle}>{item.huntTitle || "Untitled Hunt"}</Text>
+                            <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
+                        </View>
+                    </TouchableOpacity>
                 )}
                 keyExtractor={(item, index) => index.toString()}
                 style={styles.list}
@@ -121,7 +113,13 @@ const HomeScreen = ({ navigation }) => {
             <FlatList
                 data={plannedHunts.filter(hunt => hunt.createdBy === userFirstName)}
                 renderItem={({ item }) => (
-                    <HuntItem item={item} onPress={handleHuntPress} />
+                    <TouchableOpacity style={styles.huntItem} onPress={() => navigation.navigate('ConfirmHunt', { hunt: item })}>
+                        <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+                        <View>
+                            <Text style={styles.huntTitle}>{item.huntTitle || "Untitled Hunt"}</Text>
+                            <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
+                        </View>
+                    </TouchableOpacity>
                 )}
                 keyExtractor={(item, index) => index.toString()}
                 style={styles.list}
@@ -154,15 +152,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
+    profileImageContainer: {
+        position: 'relative',
+    },
     profileImage: {
         width: 100,
         height: 100,
         borderRadius: 50,
-        marginBottom: 10,
+    },
+    editIconContainer: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#00000099',
+        borderRadius: 12,
+        padding: 4,
     },
     profileName: {
         fontSize: 24,
         fontWeight: 'bold',
+        marginTop: 10,
     },
     sectionTitle: {
         fontSize: 18,
