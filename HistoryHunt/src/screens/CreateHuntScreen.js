@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
-import Button from '../components/CustomButton'; // Se till att du använder rätt sökväg
+import Button from '../components/CustomButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, set } from 'firebase/database';
-import { database } from '../../firebaseConfig'; // Se till att sökvägen är korrekt
+import { database } from '../../firebaseConfig';
 
 const CreateHuntScreen = ({ navigation }) => {
     const [huntTitle, setHuntTitle] = useState('');
     const [estimatedTime, setEstimatedTime] = useState('');
-
 
     const handleNextStep = async () => {
         if (!huntTitle || !estimatedTime) {
@@ -32,6 +31,7 @@ const CreateHuntScreen = ({ navigation }) => {
 
         // Förbered jaktdata
         const huntData = {
+            huntId,
             huntTitle,
             estimatedTime,
             huntImage,
@@ -51,10 +51,7 @@ const CreateHuntScreen = ({ navigation }) => {
 
             // Navigera till nästa skärm
             navigation.navigate('CreateHuntMap', {
-                huntTitle,
-                estimatedTime,
-                huntImage,
-                huntId,
+                hunt: huntData,
             });
         } catch (error) {
             console.error('Error creating hunt:', error);

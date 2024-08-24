@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
-import Button from '../components/CustomButton'; // Make sure to use the correct path
+import Button from '../components/CustomButton';
 import { ref, set } from 'firebase/database';
-import { database } from '../../firebaseConfig'; // Ensure the path is correct
+import { database } from '../../firebaseConfig';
 import * as Location from 'expo-location';
-import MapViewComponent from '../components/MapViewComponent';
+import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateHuntMapScreen = ({ navigation, route }) => {
-    const { huntTitle, estimatedTime, huntImage, huntId } = route.params;
+    const { hunt } = route.params;
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [region, setRegion] = useState(null);
+    const [userLocation, setUserLocation] = useState(null);
 
     useEffect(() => {
         (async () => {
@@ -27,52 +28,42 @@ const CreateHuntMapScreen = ({ navigation, route }) => {
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
             });
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
         })();
     }, []);
 
-    const handleMapPress = (coordinate) => {
+    const handleMapPress = (event) => {
+        const coordinate = event.nativeEvent.coordinate;
         setSelectedLocation(coordinate);
     };
 
     const handleCreateHunt = async () => {
-        if (!selectedLocation || !huntTitle || !estimatedTime) {
-            Alert.alert('Missing Information', 'Please fill in all fields and select a location.');
+        if (!selectedLocation) {
+            Alert.alert('Missing Information', 'Please select a location on the map.');
             return;
         }
 
         try {
-            const userId = await AsyncStorage.getItem('userId');
-            const firstname = await AsyncStorage.getItem('firstname');
-
-            // Spara hunten i användarens "plannedHunts"
-            const userHuntRef = ref(database, `users/${userId}/plannedHunts/${huntId}`);
-            await set(userHuntRef, {
-                huntTitle,
-                estimatedTime,
-                huntImage,
+            const updatedHuntData = {
+                ...hunt,
                 location: selectedLocation,
-                createdBy: firstname || userId, // Lägg till den som skapade hunten
-            });
+            };
 
-            // Spara hunten i den allmänna hunts-databasen
-            const newHuntRef = ref(database, `hunts/${huntId}`);
-            await set(newHuntRef, {
-                huntTitle,
-                estimatedTime,
-                huntImage,
-                location: selectedLocation, // Sending the location here
-                createdBy: firstname || userId,
-            });
+            const newHuntRef = ref(database, `hunts/${hunt.huntId}`);
+            await set(newHuntRef, updatedHuntData);
+
+            // Uppdatera användarens plannedHunts med platsen
+            const userId = await AsyncStorage.getItem('userId');
+            const userPlannedHuntsRef = ref(database, `users/${userId}/plannedHunts/${hunt.huntId}`);
+            await set(userPlannedHuntsRef, updatedHuntData);
 
             Alert.alert('Success', 'Hunt created successfully!');
-
-            // Navigera till InvitePlayersScreen och skicka vidare alla relevanta data
             navigation.navigate('InvitePlayers', {
-                huntId,
-                huntTitle,
-                estimatedTime,
-                huntImage,
-                location: selectedLocation, // Skicka platsen vidare till InvitePlayersScreen
+                hunt: updatedHuntData,
+                userLocation,  // Skicka med användarens plats
             });
         } catch (error) {
             console.error('Error creating hunt:', error);
@@ -83,14 +74,19 @@ const CreateHuntMapScreen = ({ navigation, route }) => {
     return (
         <View style={styles.container}>
             {region && (
-                <MapViewComponent
+                <MapView
+                    style={styles.map}
                     region={region}
-                    selectedLocation={selectedLocation}
-                    onMarkerPress={handleMapPress}
-                />
+                    showsUserLocation={true} // Visa användarens nuvarande position med blå pricken
+                    onPress={handleMapPress}
+                >
+                    {selectedLocation && (
+                        <Marker coordinate={selectedLocation} />
+                    )}
+                </MapView>
             )}
             <View style={styles.buttonContainer}>
-                <Button title="Create Hunt" onPress={handleCreateHunt} />
+                <Button title="Set Location & Continue" onPress={handleCreateHunt} />
             </View>
         </View>
     );
@@ -100,15 +96,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    map: {
+        flex: 1,
+    },
     buttonContainer: {
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
-        right: 20,
-        padding: 10,
-        borderRadius: 10,
-        backgroundColor: '#ffffff',
-        alignItems: 'center',
+        padding: 20,
     },
 });
 

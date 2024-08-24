@@ -4,18 +4,16 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, set } from 'firebase/database';
 import { database } from '../../firebaseConfig';
-import * as Location from 'expo-location';
 
 const InvitePlayersScreen = ({ navigation, route }) => {
-    const { huntId, huntTitle, estimatedTime, huntImage, location } = route.params;
+    const { hunt, userLocation } = route.params;
     const [players, setPlayers] = useState([]);
     const [selectedPlayers, setSelectedPlayers] = useState([]);
-    const [userLocation, setUserLocation] = useState(null);
 
     useEffect(() => {
-        console.log("Received huntTitle in InvitePlayersScreen:", huntTitle);
+        console.log("Received hunt in InvitePlayersScreen:", hunt);
+        console.log("Received userLocation in InvitePlayersScreen:", userLocation);
         fetchPlayers();
-        fetchUserLocation(); // Hämtar användarens position
     }, []);
 
     const fetchPlayers = async () => {
@@ -33,24 +31,6 @@ const InvitePlayersScreen = ({ navigation, route }) => {
         } catch (error) {
             console.error('Error fetching players:', error);
             Alert.alert('Error', 'An error occurred while fetching players.');
-        }
-    };
-
-    const fetchUserLocation = async () => {
-        try {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'Permission to access location was denied.');
-                return;
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            setUserLocation({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            });
-        } catch (error) {
-            console.error('Error fetching user location:', error);
         }
     };
 
@@ -73,13 +53,10 @@ const InvitePlayersScreen = ({ navigation, route }) => {
             const firstname = await AsyncStorage.getItem('firstname');
 
             const invitations = selectedPlayers.map((playerId) => {
-                const invitationRef = ref(database, `users/${playerId}/invitations/${huntId}`);
+                const invitationRef = ref(database, `users/${playerId}/invitations/${hunt.huntId}`);
                 return set(invitationRef, {
-                    huntTitle,
-                    estimatedTime,
-                    huntImage,
+                    ...hunt,
                     invitedBy: firstname || userId,
-                    location,
                     userLocation,
                 });
             });

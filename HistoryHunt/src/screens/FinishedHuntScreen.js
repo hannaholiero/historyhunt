@@ -1,9 +1,21 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, Button } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Image, StyleSheet, Button, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
-const FinishedHuntScreen = ({ route, navigation }) => {
+const FinishedGameScreen = ({ route, navigation }) => {
     const { hunt, photoUri } = route.params;
+
+    useEffect(() => {
+        console.log("Received hunt in FinishGameScreen:", hunt);
+        console.log("Received photoUri in FinishGameScreen:", photoUri);
+
+        // Kontrollera att hunt och huntId finns
+        if (!hunt || !hunt.huntId) {
+            console.error("Hunt or Hunt ID is missing");
+            Alert.alert('Error', 'Hunt or Hunt ID is missing');
+            navigation.navigate('Home');
+        }
+    }, [hunt, photoUri, navigation]);
 
     return (
         <View style={styles.container}>
@@ -34,7 +46,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
     },
     map: {
         height: 300,
@@ -43,7 +54,6 @@ const styles = StyleSheet.create({
     congratsText: {
         fontSize: 24,
         marginVertical: 20,
-        fontWeight: 'bold',
     },
     image: {
         width: 200,
@@ -52,4 +62,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default FinishedHuntScreen;
+export default FinishedGameScreen;

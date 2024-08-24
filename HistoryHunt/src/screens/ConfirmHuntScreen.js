@@ -3,26 +3,29 @@ import { View, Text, Image, Button, StyleSheet, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const ConfirmHuntScreen = ({ route, navigation }) => {
-    const { huntTitle, invitedBy, huntImage, estimatedTime, location } = route.params || {}; // Använd tomt objekt som fallback
+    const { huntId, huntTitle, invitedBy, huntImage, estimatedTime, location, userLocation } = route.params;
 
     useEffect(() => {
-        if (!location) {
-            Alert.alert("Location Error", "Location data is missing or invalid.");
-            console.error("Received invalid location data:", location);
-        } else {
-            console.log("Received location in ConfirmHuntScreen:", location);
-        }
-    }, [location]);
+        console.log("Received huntId:", huntId);
+        console.log("Received huntTitle:", huntTitle);
+        console.log("Received invitedBy:", invitedBy);
+        console.log("Received huntImage:", huntImage);
+        console.log("Received estimatedTime:", estimatedTime);
+        console.log("Received location in ConfirmHuntScreen:", location);
+        console.log("Received userLocation in ConfirmHuntScreen:", userLocation);
+    }, [huntId, huntTitle, invitedBy, huntImage, estimatedTime, location, userLocation]);
 
     const handleConfirm = () => {
         if (location) {
             navigation.navigate('InGame', {
                 hunt: {
+                    huntId,  // Skicka med huntId här
                     huntTitle,
                     estimatedTime,
                     huntImage,
                     location,
                 },
+                userLocation,
             });
         } else {
             Alert.alert('Error', 'Location not found.');
@@ -32,7 +35,7 @@ const ConfirmHuntScreen = ({ route, navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>CONFIRM HUNT</Text>
-            <Text style={styles.subTitle}>You selected: {huntTitle}</Text>
+            <Text style={styles.subTitle}>Du valde: {huntTitle}</Text>
             <View style={styles.huntInfo}>
                 <Image source={{ uri: huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
                 <View>
@@ -57,7 +60,7 @@ const ConfirmHuntScreen = ({ route, navigation }) => {
                 <Text style={styles.errorText}>Location not found</Text>
             )}
 
-            <Text style={styles.estimatedTime}>Estimated Time: {estimatedTime} minutes</Text>
+            <Text style={styles.estimatedTime}>Estimerad tid: {estimatedTime} minuter</Text>
             <Button title="Confirm!" onPress={handleConfirm} />
         </View>
     );

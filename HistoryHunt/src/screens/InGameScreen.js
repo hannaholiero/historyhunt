@@ -10,27 +10,50 @@ const InGameScreen = ({ route, navigation }) => {
     const [photos, setPhotos] = useState(photoUri ? [photoUri] : []);
 
     const handleCompleteMission = async () => {
-        try {
-            const timestamp = new Date().toISOString();
-            const firstname = await AsyncStorage.getItem('firstname');
+        if (!missionCompleted) {
+            try {
+                setMissionCompleted(true);
 
-            for (const photoUri of photos) {
-                const newPhotoRef = push(ref(database, `hunts/${hunt.huntId}/photos`));
-                await update(newPhotoRef, {
-                    user: firstname,
-                    timestamp: timestamp,
-                    photoUri: photoUri,
-                    location: hunt.location,
+                // Hämta aktuellt datum och tid
+                const timestamp = new Date().toISOString();
+
+                // Hämta användarens förnamn (vi antar att det redan finns sparat i AsyncStorage)
+                const firstname = await AsyncStorage.getItem('firstname');
+
+                // Hämta huntId från hunt-objektet
+                const huntId = hunt.huntId;
+
+                // Kontrollera att huntId finns
+                if (!huntId) {
+                    Alert.alert('Error', 'Hunt ID is missing.');
+                    return;
+                }
+
+                // Spara varje foto tillsammans med användarens data i Firebase
+                for (const photoUri of photos) {
+                    const newPhotoRef = push(ref(database, `hunts/${huntId}/photos`));
+                    await update(newPhotoRef, {
+                        user: firstname,
+                        timestamp: timestamp,
+                        photoUri: photoUri,
+                        location: hunt.location,  // Spara platsdata för varje foto
+                    });
+                }
+
+                Alert.alert("Mission Completed", "Congratulations! You've completed the mission.");
+
+                // Navigera till FinishGameScreen med hunt och photoUri
+                navigation.navigate('FinishGame', {
+                    hunt: { ...hunt, huntId },  // Skicka hela hunt-objektet inklusive huntId
+                    photoUri: photos[0],  // Om det bara är ett foto
                 });
+            } catch (error) {
+                console.error("Error saving mission data:", error);
+                Alert.alert("Error", "There was a problem saving the mission data. Please try again.");
             }
-
-            Alert.alert("Mission Completed", "Congratulations! You've completed the mission.");
-            navigation.navigate('Home');
-        } catch (error) {
-            console.error("Error saving mission data:", error);
-            Alert.alert("Error", "There was a problem saving the mission data. Please try again.");
         }
     };
+
 
     const takeImageHandler = () => {
         navigation.navigate('TakePhoto', { hunt });
