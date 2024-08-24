@@ -3,29 +3,30 @@ import { View, Text, Image, Button, StyleSheet, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const ConfirmHuntScreen = ({ route, navigation }) => {
-    const { huntId, huntTitle, invitedBy, huntImage, estimatedTime, location, userLocation } = route.params;
+    const { hunt } = route.params || {}; // Om hunt är undefined, sätt det som tomt objekt
 
     useEffect(() => {
-        console.log("Received huntId:", huntId);
-        console.log("Received huntTitle:", huntTitle);
-        console.log("Received invitedBy:", invitedBy);
-        console.log("Received huntImage:", huntImage);
-        console.log("Received estimatedTime:", estimatedTime);
-        console.log("Received location in ConfirmHuntScreen:", location);
-        console.log("Received userLocation in ConfirmHuntScreen:", userLocation);
-    }, [huntId, huntTitle, invitedBy, huntImage, estimatedTime, location, userLocation]);
+        if (!hunt) {
+            Alert.alert('Error', 'Hunt data is missing.');
+            navigation.goBack(); // Gå tillbaka till föregående skärm om hunt är undefined
+        } else {
+            console.log("Received hunt in ConfirmHuntScreen:", hunt);
+            console.log("Received location in ConfirmHuntScreen:", hunt.location);
+        }
+    }, [hunt, navigation]);
+
+    if (!hunt || !hunt.location) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>Hunt data or location is missing.</Text>
+            </View>
+        );
+    }
 
     const handleConfirm = () => {
-        if (location) {
+        if (hunt.location) {
             navigation.navigate('InGame', {
-                hunt: {
-                    huntId,  // Skicka med huntId här
-                    huntTitle,
-                    estimatedTime,
-                    huntImage,
-                    location,
-                },
-                userLocation,
+                hunt, // Skicka hela hunt-objektet med platsdata
             });
         } else {
             Alert.alert('Error', 'Location not found.');
@@ -35,32 +36,31 @@ const ConfirmHuntScreen = ({ route, navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>CONFIRM HUNT</Text>
-            <Text style={styles.subTitle}>Du valde: {huntTitle}</Text>
+            <Text style={styles.subTitle}>Du valde: {hunt.huntTitle}</Text>
             <View style={styles.huntInfo}>
-                <Image source={{ uri: huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+                <Image source={{ uri: hunt.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
                 <View>
-                    <Text style={styles.huntTitle}>{huntTitle}</Text>
+                    <Text style={styles.huntTitle}>{hunt.huntTitle}</Text>
                 </View>
             </View>
 
-            {/* Visa kartan om platsen finns */}
-            {location ? (
+            {hunt.location ? (
                 <MapView
                     style={styles.map}
                     initialRegion={{
-                        latitude: location.latitude,
-                        longitude: location.longitude,
+                        latitude: hunt.location.latitude,
+                        longitude: hunt.location.longitude,
                         latitudeDelta: 0.01,
                         longitudeDelta: 0.01,
                     }}
                 >
-                    <Marker coordinate={location} title="Selected Location" />
+                    <Marker coordinate={hunt.location} title="Hunt Location" />
                 </MapView>
             ) : (
                 <Text style={styles.errorText}>Location not found</Text>
             )}
 
-            <Text style={styles.estimatedTime}>Estimerad tid: {estimatedTime} minuter</Text>
+            <Text style={styles.estimatedTime}>Estimerad tid: {hunt.estimatedTime} minuter</Text>
             <Button title="Confirm!" onPress={handleConfirm} />
         </View>
     );
@@ -95,10 +95,6 @@ const styles = StyleSheet.create({
     huntTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    huntDetails: {
-        fontSize: 14,
-        color: '#555',
     },
     map: {
         width: 200,

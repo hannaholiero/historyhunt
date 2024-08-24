@@ -1,9 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebaseConfig';
 import CustomButton from '../components/CustomButton';
+
+const HuntItem = React.memo(({ item, onPress }) => {
+    return (
+        <TouchableOpacity style={styles.huntItem} onPress={() => onPress(item)}>
+            <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+            <View>
+                <Text style={styles.huntTitle}>{item.huntTitle || item.huntName || "Untitled Hunt"}</Text>
+                <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+});
 
 const HomeScreen = ({ navigation }) => {
     const [plannedHunts, setPlannedHunts] = useState([]);
@@ -55,30 +67,30 @@ const HomeScreen = ({ navigation }) => {
         fetchUserData();
     }, []);
 
-    const renderHuntItem = ({ item }) => (
-        <TouchableOpacity
-            style={styles.huntItem}
-            onPress={() => navigation.navigate('ConfirmHunt', {
-                huntId: item.huntId,
-                huntTitle: item.huntTitle || item.huntName,
-                estimatedTime: item.estimatedTime,
-                huntImage: item.huntImage,
-                location: item.location,
-                createdBy: item.createdBy,
-            })}
-        >
-            <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
-            <View>
-                <Text style={styles.huntTitle}>{item.huntTitle || item.huntName || "Untitled Hunt"}</Text>
-                <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
-            </View>
-        </TouchableOpacity>
-    );
+    // const handleHuntPress = useCallback((item) => {
+    //     console.log("Hunt data sent to ConfirmHuntScreen:", item);
+    //     navigation.navigate('ConfirmHunt', {
+    //         huntId: item.huntId,
+    //         huntTitle: item.huntTitle || item.huntName,
+    //         estimatedTime: item.estimatedTime,
+    //         huntImage: item.huntImage,
+    //         location: item.location,
+    //         createdBy: item.createdBy,
+    //     });
+    // }, [navigation]);
+
+    const handleHuntPress = useCallback((item) => {
+        console.log("Sending hunt to ConfirmHuntScreen:", item);
+        navigation.navigate('ConfirmHunt', {
+            hunt: item,
+        });
+    }, [navigation]);
+
 
     const renderMedalItem = ({ item }) => (
         <TouchableOpacity
             style={styles.medalItem}
-            onPress={() => navigation.navigate('FinishGame', {
+            onPress={() => navigation.navigate('FinishedHunt', {
                 hunt: item,
                 photoUri: item.photoUri
             })}
@@ -98,7 +110,9 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Active Hunts</Text>
             <FlatList
                 data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName)}
-                renderItem={renderHuntItem}
+                renderItem={({ item }) => (
+                    <HuntItem item={item} onPress={handleHuntPress} />
+                )}
                 keyExtractor={(item, index) => index.toString()}
                 style={styles.list}
             />
@@ -106,7 +120,9 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Planned Hunts</Text>
             <FlatList
                 data={plannedHunts.filter(hunt => hunt.createdBy === userFirstName)}
-                renderItem={renderHuntItem}
+                renderItem={({ item }) => (
+                    <HuntItem item={item} onPress={handleHuntPress} />
+                )}
                 keyExtractor={(item, index) => index.toString()}
                 style={styles.list}
             />
