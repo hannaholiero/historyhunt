@@ -1,20 +1,19 @@
 import React from 'react';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { StyleSheet, Dimensions } from 'react-native';
 
 const MapViewComponent = ({
     markers = [],
-    onMarkerPress = () => { },
+    onMarkerPress = () => { },  // Funktion som triggas vid klick på kartan
     region,
     selectedLocation
 }) => {
     return (
         <MapView
             style={styles.map}
-            onPress={(e) => onMarkerPress(e.nativeEvent.coordinate)}
+            onPress={(e) => onMarkerPress(e.nativeEvent.coordinate)}  // Hantera klick på kartan
             region={region}
             showsUserLocation={true}
-            provider={PROVIDER_GOOGLE}
         >
             {selectedLocation && (
                 <Marker

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
-import Button from '../components/CustomButton'; // Använd rätt sökväg till din knappkomponent
+import Button from '../components/CustomButton'; // Make sure to use the correct path
 import { ref, set } from 'firebase/database';
-import { database } from '../../firebaseConfig'; // Se till att sökvägen är korrekt
+import { database } from '../../firebaseConfig'; // Ensure the path is correct
 import * as Location from 'expo-location';
 import MapViewComponent from '../components/MapViewComponent';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateHuntMapScreen = ({ navigation, route }) => {
     const { huntTitle, estimatedTime, huntImage, huntId } = route.params;
@@ -40,19 +41,39 @@ const CreateHuntMapScreen = ({ navigation, route }) => {
         }
 
         try {
+            const userId = await AsyncStorage.getItem('userId');
+            const firstname = await AsyncStorage.getItem('firstname');
+
+            // Spara hunten i användarens "plannedHunts"
+            const userHuntRef = ref(database, `users/${userId}/plannedHunts/${huntId}`);
+            await set(userHuntRef, {
+                huntTitle,
+                estimatedTime,
+                huntImage,
+                location: selectedLocation,
+                createdBy: firstname || userId, // Lägg till den som skapade hunten
+            });
+
+            // Spara hunten i den allmänna hunts-databasen
             const newHuntRef = ref(database, `hunts/${huntId}`);
             await set(newHuntRef, {
                 huntTitle,
                 estimatedTime,
                 huntImage,
-                location: selectedLocation, // Spara den valda platsen
-                participants: [],
-                completedBy: [],
+                location: selectedLocation, // Sending the location here
+                createdBy: firstname || userId,
             });
 
             Alert.alert('Success', 'Hunt created successfully!');
-            // Skicka med platsen till nästa skärm
-            navigation.navigate('ConfirmHuntScreen', { huntId, huntTitle, estimatedTime, huntImage, selectedLocation });
+
+            // Navigera till InvitePlayersScreen och skicka vidare alla relevanta data
+            navigation.navigate('InvitePlayers', {
+                huntId,
+                huntTitle,
+                estimatedTime,
+                huntImage,
+                location: selectedLocation, // Skicka platsen vidare till InvitePlayersScreen
+            });
         } catch (error) {
             console.error('Error creating hunt:', error);
             Alert.alert('Error', 'An error occurred while creating the hunt.');
@@ -92,5 +113,3 @@ const styles = StyleSheet.create({
 });
 
 export default CreateHuntMapScreen;
-
-// AIzaSyAdrrWYJiONS1DQpS09IutwMqdu9cGKJBg

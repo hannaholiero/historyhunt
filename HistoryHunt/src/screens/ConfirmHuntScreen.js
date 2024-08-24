@@ -1,37 +1,63 @@
-import React from 'react';
-import { View, Alert, Text, Image, Button, StyleSheet } from 'react-native';
-import MapViewComponent from '../components/MapViewComponent';
+import React, { useEffect } from 'react';
+import { View, Text, Image, Button, StyleSheet } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 
 const ConfirmHuntScreen = ({ route, navigation }) => {
-    const { huntTitle, invitedBy, huntImage, estimatedTime, selectedLocation } = route.params;
+    const { huntTitle, invitedBy, huntImage, estimatedTime, location, userLocation } = route.params;
 
+    useEffect(() => {
+        console.log("Received location in ConfirmHuntScreen:", location);
+        console.log("Received userLocation in ConfirmHuntScreen:", userLocation);
+    }, [location, userLocation]);
+
+    // In ConfirmHuntScreen
     const handleConfirm = () => {
-        Alert.alert('Confirmed!', `You have confirmed the hunt: ${huntTitle}`);
-        navigation.navigate('Home');
+        if (location) {
+            navigation.navigate('InGame', {
+                hunt: {
+                    huntTitle,
+                    estimatedTime,
+                    huntImage,
+                    location,
+                    // Se till att location skickas med här
+                },
+                userLocation,
+            });
+        } else {
+            Alert.alert('Error', 'Location not found.');
+        }
     };
+
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>CONFIRM HUNT</Text>
-            <Text style={styles.subTitle}>Du valde:</Text>
+            <Text style={styles.subTitle}>Du valde: {huntTitle}</Text>
             <View style={styles.huntInfo}>
                 <Image source={{ uri: huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
                 <View>
                     <Text style={styles.huntTitle}>{huntTitle}</Text>
-                    <Text style={styles.huntDetails}>Inbjuden av {invitedBy}</Text>
+
                 </View>
             </View>
-            <View style={styles.mapContainer}>
-                <MapViewComponent
-                    region={{
-                        latitude: selectedLocation.latitude,
-                        longitude: selectedLocation.longitude,
+
+            {/* Visa kartan om platsen finns */}
+            {location ? (
+                <MapView
+                    style={styles.map}
+                    initialRegion={{
+                        latitude: location.latitude,
+                        longitude: location.longitude,
                         latitudeDelta: 0.01,
                         longitudeDelta: 0.01,
                     }}
-                    selectedLocation={selectedLocation}
-                />
-            </View>
+                >
+                    <Marker coordinate={location} title="Selected Location" />
+                </MapView>
+            ) : (
+                <Text style={styles.errorText}>Location not found</Text>
+            )}
+
             <Text style={styles.estimatedTime}>Estimerad tid: {estimatedTime} minuter</Text>
             <Button title="Confirm!" onPress={handleConfirm} />
         </View>
@@ -72,13 +98,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#555',
     },
-    mapContainer: {
-        width: '100%',
+    map: {
+        width: 200,
         height: 200,
         marginBottom: 20,
     },
     estimatedTime: {
         fontSize: 18,
+        marginBottom: 20,
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 16,
         marginBottom: 20,
     },
 });

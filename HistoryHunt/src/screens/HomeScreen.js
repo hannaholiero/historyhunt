@@ -1,272 +1,112 @@
-
-// import React, { useState, useEffect } from 'react';
-// import { View, Text, Button, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
-// import { useNavigation } from '@react-navigation/native';
-// import axios from 'axios';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// const HomeScreen = () => {
-//     const navigation = useNavigation();
-//     const [activeHunts, setActiveHunts] = useState([]);
-//     const [plannedHunts, setPlannedHunts] = useState([]);
-//     const [userEmail, setUserEmail] = useState('');
-
-//     useEffect(() => {
-//         const fetchUserData = async () => {
-//             const email = await AsyncStorage.getItem('userEmail');
-//             setUserEmail(email);
-
-//             // Fetch user data
-//             const response = await axios.get(
-//                 `https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users.json`
-//             );
-
-//             const usersData = response.data;
-
-//             // Filter active hunts
-//             const active = [];
-//             const planned = [];
-
-//             Object.keys(usersData).forEach(key => {
-//                 const user = usersData[key];
-
-//                 if (user.email === email) {
-//                     if (user.plannedHunts) {
-//                         planned.push(...Object.values(user.plannedHunts));
-//                     }
-//                     if (user.invitations) {
-//                         active.push(...Object.values(user.invitations));
-//                     }
-//                 }
-//             });
-
-//             setActiveHunts(active);
-//             setPlannedHunts(planned);
-//         };
-
-//         fetchUserData();
-//     }, []);
-
-//     const renderHuntItem = ({ item }) => (
-//         <View style={styles.huntItem}>
-//             <Image
-//                 source={{ uri: item.huntImage || 'https://picsum.photos/40' }}
-//                 style={styles.huntIcon}
-//             />
-//             <View>
-//                 <Text style={styles.huntTitle}>{item.huntName}</Text>
-//                 <Text style={styles.huntDetails}>Inbjuden av {item.invitedBy}</Text>
-//             </View>
-//         </View>
-//     );
-
-//     return (
-//         <View style={styles.container}>
-//             <Text style={styles.profileName}>{userEmail}</Text>
-
-//             <View style={styles.section}>
-//                 <Text style={styles.sectionTitle}>Active Hunts</Text>
-//                 <FlatList
-//                     data={activeHunts}
-//                     renderItem={renderHuntItem}
-//                     keyExtractor={(item, index) => index.toString()}
-//                 />
-//             </View>
-
-//             <View style={styles.section}>
-//                 <Text style={styles.sectionTitle}>Planned Hunts</Text>
-//                 <FlatList
-//                     data={plannedHunts}
-//                     renderItem={renderHuntItem}
-//                     keyExtractor={(item, index) => index.toString()}
-//                 />
-//             </View>
-
-//             <TouchableOpacity
-//                 style={styles.createHuntButton}
-//                 onPress={() => navigation.navigate('CreateHunt')}
-//             >
-//                 <Text style={styles.createHuntButtonText}>Create Hunt</Text>
-//             </TouchableOpacity>
-
-//             <View style={styles.medalsSection}>
-//                 <Text style={styles.medalsTitle}>MEDALS</Text>
-//                 <Image source={{ uri: 'https://picsum.photos/80' }} style={styles.medalsIcon} />
-//             </View>
-//         </View>
-//     );
-// };
-
-// const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         backgroundColor: '#e7e8d1',
-//         padding: 20,
-//     },
-//     profileName: {
-//         fontSize: 24,
-//         fontWeight: 'bold',
-//         textAlign: 'center',
-//         marginVertical: 10,
-//     },
-//     section: {
-//         marginVertical: 10,
-//     },
-//     sectionTitle: {
-//         fontSize: 18,
-//         fontWeight: 'bold',
-//         marginBottom: 10,
-//     },
-//     huntItem: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         marginBottom: 10,
-//     },
-//     huntIcon: {
-//         width: 40,
-//         height: 40,
-//         marginRight: 10,
-//     },
-//     huntTitle: {
-//         fontSize: 16,
-//         fontWeight: 'bold',
-//     },
-//     huntDetails: {
-//         fontSize: 14,
-//         color: '#555',
-//     },
-//     createHuntButton: {
-//         backgroundColor: '#7ba467',
-//         padding: 15,
-//         borderRadius: 10,
-//         alignItems: 'center',
-//         marginTop: 20,
-//     },
-//     createHuntButtonText: {
-//         fontSize: 18,
-//         color: '#ffffff',
-//     },
-//     medalsSection: {
-//         alignItems: 'center',
-//         marginTop: 20,
-//     },
-//     medalsTitle: {
-//         fontSize: 20,
-//         fontWeight: 'bold',
-//         marginBottom: 10,
-//     },
-//     medalsIcon: {
-//         width: 80,
-//         height: 80,
-//     },
-// });
-
-// export default HomeScreen;
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../../firebaseConfig';
+import CustomButton from '../components/CustomButton';
 
-const HomeScreen = () => {
-    const navigation = useNavigation();
-    const [activeHunts, setActiveHunts] = useState([]);
+const HomeScreen = ({ navigation }) => {
     const [plannedHunts, setPlannedHunts] = useState([]);
-    const [userEmail, setUserEmail] = useState('');
+    const [activeHunts, setActiveHunts] = useState([]);
+    const [userFirstName, setUserFirstName] = useState('');
+    const [userId, setUserId] = useState('');
 
     useEffect(() => {
         const fetchUserData = async () => {
-            const email = await AsyncStorage.getItem('userEmail');
-            setUserEmail(email);
+            const storedUserId = await AsyncStorage.getItem('userId');
+            const firstname = await AsyncStorage.getItem('firstname');
+            setUserFirstName(firstname);
+            setUserId(storedUserId);
 
-            // Fetch user data
-            const response = await axios.get(
-                `https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users.json`
-            );
+            if (storedUserId) {
+                const plannedHuntsRef = ref(database, `users/${storedUserId}/plannedHunts`);
+                onValue(plannedHuntsRef, (snapshot) => {
+                    const hunts = snapshot.val() || {};
+                    const formattedPlannedHunts = Object.keys(hunts).map(huntId => ({
+                        ...hunts[huntId],
+                        huntId,
+                    }));
+                    setPlannedHunts(formattedPlannedHunts);
+                });
 
-            const usersData = response.data;
-
-            // Filter active hunts
-            const active = [];
-            const planned = [];
-
-            Object.keys(usersData).forEach(key => {
-                const user = usersData[key];
-
-                if (user.email === email) {
-                    if (user.plannedHunts) {
-                        planned.push(...Object.values(user.plannedHunts));
-                    }
-                    if (user.invitations) {
-                        active.push(...Object.values(user.invitations));
-                    }
-                }
-            });
-
-            setActiveHunts(active);
-            setPlannedHunts(planned);
+                const activeHuntsRef = ref(database, `users/${storedUserId}/invitations`);
+                onValue(activeHuntsRef, (snapshot) => {
+                    const hunts = snapshot.val() || {};
+                    const formattedActiveHunts = Object.keys(hunts).map(huntId => ({
+                        ...hunts[huntId],
+                        huntId,
+                    }));
+                    setActiveHunts(formattedActiveHunts);
+                });
+            }
         };
 
         fetchUserData();
     }, []);
 
-    const handleHuntPress = (hunt) => {
-        navigation.navigate('ConfirmHunt', {
-            huntName: hunt.huntName,
-            invitedBy: hunt.invitedBy,
-            huntImage: hunt.huntImage,
-            estimatedTime: hunt.estimatedTime,
-        });
-    };
+    // const renderHuntItem = ({ item }) => (
+    //     <TouchableOpacity style={styles.huntItem} onPress={() => navigation.navigate('ConfirmHunt', item)}>
+    //         <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+    //         <View>
+    //             <Text style={styles.huntTitle}>{item.huntTitle || item.huntName || "Untitled Hunt"}</Text>
+    //             <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
+    //         </View>
+    //     </TouchableOpacity>
+    // );
 
     const renderHuntItem = ({ item }) => (
-        <TouchableOpacity onPress={() => handleHuntPress(item)}>
-            <View style={styles.huntItem}>
-                <Image
-                    source={{ uri: item.huntImage || 'https://picsum.photos/40' }}
-                    style={styles.huntIcon}
-                />
-                <View>
-                    <Text style={styles.huntTitle}>{item.huntName}</Text>
-                    <Text style={styles.huntDetails}>Inbjuden av {item.invitedBy}</Text>
-                </View>
+        <TouchableOpacity
+            style={styles.huntItem}
+            onPress={() => navigation.navigate('ConfirmHunt', {
+                huntId: item.huntId,
+                huntTitle: item.huntTitle || item.huntName,
+                estimatedTime: item.estimatedTime,
+                huntImage: item.huntImage,
+                location: item.location, // Skicka med location här
+                createdBy: item.createdBy,
+            })}
+        >
+            <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
+            <View>
+                <Text style={styles.huntTitle}>{item.huntTitle || item.huntName || "Untitled Hunt"}</Text>
+                <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
             </View>
         </TouchableOpacity>
     );
 
+
     return (
         <View style={styles.container}>
-            <Text style={styles.profileName}>{userEmail}</Text>
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Active Hunts</Text>
-                <FlatList
-                    data={activeHunts}
-                    renderItem={renderHuntItem}
-                    keyExtractor={(item, index) => index.toString()}
-                />
+            <View style={styles.profileContainer}>
+                <Text style={styles.profileName}>{userFirstName}</Text>
+                <Image style={styles.profileImage} source={{ uri: 'https://via.placeholder.com/150' }} />
             </View>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Planned Hunts</Text>
-                <FlatList
-                    data={plannedHunts}
-                    renderItem={renderHuntItem}
-                    keyExtractor={(item, index) => index.toString()}
-                />
-            </View>
+            <Text style={styles.sectionTitle}>Active Hunts</Text>
+            <FlatList
+                data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName)} // Endast jakter som skapats av andra
+                renderItem={renderHuntItem}
+                keyExtractor={(item, index) => index.toString()}
+                style={styles.list}
+            />
 
-            <TouchableOpacity
-                style={styles.createHuntButton}
-                onPress={() => navigation.navigate('CreateHunt')}
-            >
-                <Text style={styles.createHuntButtonText}>Create Hunt</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Planned Hunts</Text>
+            <FlatList
+                data={plannedHunts.filter(hunt => hunt.createdBy === userFirstName)} // Endast jakter som skapats av användaren
+                renderItem={renderHuntItem}
+                keyExtractor={(item, index) => index.toString()}
+                style={styles.list}
+            />
 
-            <View style={styles.medalsSection}>
+            <CustomButton title="Create Hunt" onPress={() => navigation.navigate('CreateHunt')} />
+
+            <View style={styles.medalsContainer}>
                 <Text style={styles.medalsTitle}>MEDALS</Text>
-                <Image source={{ uri: 'https://picsum.photos/80' }} style={styles.medalsIcon} />
+                <View style={styles.medals}>
+                    <View style={styles.medal} />
+                    <View style={styles.medal} />
+                    <View style={styles.medal} />
+                </View>
             </View>
         </View>
     );
@@ -275,31 +115,43 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#e7e8d1',
+        backgroundColor: '#fbf5e9',
         padding: 20,
+    },
+    profileContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    profileImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 10,
     },
     profileName: {
         fontSize: 24,
         fontWeight: 'bold',
-        textAlign: 'center',
-        marginVertical: 10,
-    },
-    section: {
-        marginVertical: 10,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginVertical: 10,
+    },
+    list: {
+        marginBottom: 20,
     },
     huntItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        padding: 15,
+        backgroundColor: '#f0e68c',
+        borderRadius: 8,
         marginBottom: 10,
     },
-    huntIcon: {
-        width: 40,
-        height: 40,
+    huntImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         marginRight: 10,
     },
     huntTitle: {
@@ -310,29 +162,24 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#555',
     },
-    createHuntButton: {
-        backgroundColor: '#7ba467',
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    createHuntButtonText: {
-        fontSize: 18,
-        color: '#ffffff',
-    },
-    medalsSection: {
+    medalsContainer: {
         alignItems: 'center',
         marginTop: 20,
     },
     medalsTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 10,
     },
-    medalsIcon: {
-        width: 80,
-        height: 80,
+    medals: {
+        flexDirection: 'row',
+        marginTop: 10,
+    },
+    medal: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#ffd700',
+        marginHorizontal: 5,
     },
 });
 

@@ -2,73 +2,107 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Button, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ref, set } from 'firebase/database';
+import { database } from '../../firebaseConfig';
+import * as Location from 'expo-location';
 
 const InvitePlayersScreen = ({ navigation, route }) => {
-    const [users, setUsers] = useState([]);
-    const [selectedUsers, setSelectedUsers] = useState([]);
-    const { huntTitle, estimatedTime, huntImage, huntId } = route.params;
+    const { huntId, huntTitle, estimatedTime, huntImage, location } = route.params;
+    const [players, setPlayers] = useState([]);
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [userLocation, setUserLocation] = useState(null);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await axios.get(
-                    'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users.json'
-                );
-
-                const usersData = response.data;
-                const usersList = Object.keys(usersData).map(key => ({
-                    id: key,
-                    email: usersData[key].email,
-                }));
-
-                setUsers(usersList);
-            } catch (error) {
-                console.error('Error fetching users:', error);
-                Alert.alert('Error', 'Failed to fetch users.');
-            }
-        };
-
-        fetchUsers();
+        console.log("Received huntTitle in InvitePlayersScreen:", huntTitle);
+        fetchPlayers();
+        fetchUserLocation(); // Hämtar användarens position
     }, []);
 
-    const toggleSelectUser = (userId) => {
-        setSelectedUsers(prevSelectedUsers =>
-            prevSelectedUsers.includes(userId)
-                ? prevSelectedUsers.filter(id => id !== userId)
-                : [...prevSelectedUsers, userId]
+    const fetchPlayers = async () => {
+        try {
+            const response = await axios.get(
+                'https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/users.json'
+            );
+            const users = response.data;
+            const userList = Object.keys(users).map((key) => ({
+                id: key,
+                ...users[key],
+            }));
+
+            setPlayers(userList);
+        } catch (error) {
+            console.error('Error fetching players:', error);
+            Alert.alert('Error', 'An error occurred while fetching players.');
+        }
+    };
+
+    const fetchUserLocation = async () => {
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Permission to access location was denied.');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
+        } catch (error) {
+            console.error('Error fetching user location:', error);
+        }
+    };
+
+    const togglePlayerSelection = (playerId) => {
+        setSelectedPlayers((prevSelected) =>
+            prevSelected.includes(playerId)
+                ? prevSelected.filter((id) => id !== playerId)
+                : [...prevSelected, playerId]
         );
     };
 
     const invitePlayers = async () => {
-        try {
-            const userEmail = await AsyncStorage.getItem('userEmail');
+        if (!userLocation) {
+            Alert.alert('Location Missing', 'User location is required to send invitations.');
+            return;
+        }
 
-            for (const userId of selectedUsers) {
-                const invitation = {
+        try {
+            const userId = await AsyncStorage.getItem('userId');
+            const firstname = await AsyncStorage.getItem('firstname');
+
+            const invitations = selectedPlayers.map((playerId) => {
+                const invitationRef = ref(database, `users/${playerId}/invitations/${huntId}`);
+                return set(invitationRef, {
                     huntTitle,
                     estimatedTime,
                     huntImage,
-                    invitedBy: userEmail,
-                    huntId
-                };
+                    invitedBy: firstname || userId,
+                    location,
+                    userLocation,
+                });
+            });
 
-                await axios.post(`https://hannahshistoryhunt-default-rtdb.europe-west1.firebasedatabase.app/invitations/${userId}.json`, invitation);
-            }
+            await Promise.all(invitations);
 
-            Alert.alert('Success', 'Invitations sent successfully!');
-            navigation.navigate('Home'); // Navigera till hemmet efter att inbjudningar skickats
+            Alert.alert('Success', 'Players invited successfully!');
+            navigation.navigate('Home');
         } catch (error) {
             console.error('Error sending invitations:', error);
             Alert.alert('Error', 'An error occurred while sending invitations.');
         }
     };
 
-    const renderUserItem = ({ item }) => (
+    const renderPlayerItem = ({ item }) => (
         <TouchableOpacity
-            style={[styles.userItem, selectedUsers.includes(item.id) && styles.userItemSelected]}
-            onPress={() => toggleSelectUser(item.id)}
+            style={[
+                styles.playerItem,
+                selectedPlayers.includes(item.id) && styles.selectedPlayerItem,
+            ]}
+            onPress={() => togglePlayerSelection(item.id)}
         >
-            <Text style={styles.userEmail}>{item.email}</Text>
+            <Text>{item.email}</Text>
         </TouchableOpacity>
     );
 
@@ -76,20 +110,12 @@ const InvitePlayersScreen = ({ navigation, route }) => {
         <View style={styles.container}>
             <Text style={styles.title}>Invite Players to Hunt</Text>
             <FlatList
-                data={users}
-                renderItem={renderUserItem}
-                keyExtractor={item => item.id}
+                data={players}
+                renderItem={renderPlayerItem}
+                keyExtractor={(item) => item.id}
                 style={styles.list}
             />
-            <View style={styles.buttonContainer}>
-                <Button title="Invite Selected Players" onPress={invitePlayers} />
-            </View>
-            <View style={styles.buttonContainer}>
-                <Button
-                    title="Back to Home"
-                    onPress={() => navigation.navigate('Home')}
-                />
-            </View>
+            <Button title="Invite" onPress={invitePlayers} />
         </View>
     );
 };
@@ -98,7 +124,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#fbf5e9',
+        backgroundColor: '#f5f5f5',
     },
     title: {
         fontSize: 24,
@@ -109,20 +135,14 @@ const styles = StyleSheet.create({
         flex: 1,
         marginBottom: 20,
     },
-    userItem: {
+    playerItem: {
         padding: 15,
-        backgroundColor: '#f0e68c',
+        backgroundColor: '#e0e0e0',
         borderRadius: 8,
         marginBottom: 10,
     },
-    userItemSelected: {
-        backgroundColor: '#6b8e23',
-    },
-    userEmail: {
-        fontSize: 16,
-    },
-    buttonContainer: {
-        marginTop: 10,
+    selectedPlayerItem: {
+        backgroundColor: '#c0c0c0',
     },
 });
 
