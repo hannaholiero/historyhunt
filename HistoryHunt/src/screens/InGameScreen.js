@@ -1,55 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    StyleSheet,
-    Text,
-    Image,
-    Alert,
-    ScrollView,
-    Dimensions,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, Image, Alert, ScrollView, Dimensions } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useCameraPermissions, PermissionStatus } from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
 import Button from '../components/CustomButton';
+import { ref, push, update } from 'firebase/database';
+import { database } from '../../firebaseConfig';
 
 const InGameScreen = ({ route, navigation }) => {
-    const { hunt, userLocation } = route.params; // Ta emot userLocation här
-    const [selectedMarker, setSelectedMarker] = useState(null);
-    const [photos, setPhotos] = useState([]);
-    const [cameraPermissionInformation, requestCameraPermission] = useCameraPermissions();
-    const [mediaPermissionInformation, requestMediaPermission] = MediaLibrary.usePermissions();
+    const { hunt, photoUri } = route.params;
+    const [photos, setPhotos] = useState(photoUri ? [photoUri] : []);
 
-    useEffect(() => {
-        const requestPermissions = async () => {
-            const cameraStatus = await requestCameraPermission();
-            const mediaStatus = await requestMediaPermission();
+    const handleCompleteMission = async () => {
+        try {
+            const timestamp = new Date().toISOString();
+            const firstname = await AsyncStorage.getItem('firstname');
 
-            if (cameraStatus.status !== PermissionStatus.GRANTED || mediaStatus.status !== PermissionStatus.GRANTED) {
-                Alert.alert(
-                    'Insufficient Permissions!',
-                    'You need to grant camera and media library permissions to use this feature.'
-                );
+            for (const photoUri of photos) {
+                const newPhotoRef = push(ref(database, `hunts/${hunt.huntId}/photos`));
+                await update(newPhotoRef, {
+                    user: firstname,
+                    timestamp: timestamp,
+                    photoUri: photoUri,
+                    location: hunt.location,
+                });
             }
-        };
 
-        requestPermissions();
-    }, []);
-
-    const handleMarkerPress = (location) => {
-        setSelectedMarker(location);
+            Alert.alert("Mission Completed", "Congratulations! You've completed the mission.");
+            navigation.navigate('Home');
+        } catch (error) {
+            console.error("Error saving mission data:", error);
+            Alert.alert("Error", "There was a problem saving the mission data. Please try again.");
+        }
     };
 
-    const takeImageHandler = async () => {
-        if (cameraPermissionInformation.status !== PermissionStatus.GRANTED || mediaPermissionInformation.status !== PermissionStatus.GRANTED) {
-            Alert.alert(
-                'Insufficient Permissions!',
-                'You need to grant camera and media library permissions to use this feature.'
-            );
-            return;
-        }
-
-        navigation.navigate('TakePhoto', { selectedMarker });
+    const takeImageHandler = () => {
+        navigation.navigate('TakePhoto', { hunt });
     };
 
     return (
@@ -67,27 +51,23 @@ const InGameScreen = ({ route, navigation }) => {
                 <Marker
                     coordinate={hunt.location}
                     title="Hunt Location"
-                    onPress={() => handleMarkerPress(hunt.location)}
                 />
             </MapView>
 
-            {selectedMarker && (
-                <View style={styles.actions}>
-                    <Button title="Take Photo" onPress={takeImageHandler} />
-                    <Text style={styles.text}>
-                        {photos.length}/1 photo(s) taken
-                    </Text>
-                    <View style={styles.imgContainer}>
-                        {photos.map((photo, index) => (
-                            <Image
-                                key={index}
-                                source={{ uri: photo }}
-                                style={styles.previewImage}
-                            />
-                        ))}
-                    </View>
+            <View style={styles.actions}>
+                <Button title="Take Photo" onPress={takeImageHandler} />
+                <Text style={styles.text}>{photos.length}/1 photo(s) taken</Text>
+                <View style={styles.imgContainer}>
+                    {photos.map((photo, index) => (
+                        <Image
+                            key={index}
+                            source={{ uri: photo }}
+                            style={styles.previewImage}
+                        />
+                    ))}
                 </View>
-            )}
+                <Button title="Complete Mission" onPress={handleCompleteMission} />
+            </View>
         </ScrollView>
     );
 };
@@ -102,6 +82,7 @@ const styles = StyleSheet.create({
     },
     actions: {
         alignItems: 'center',
+        marginVertical: 20,
     },
     imgContainer: {
         flexDirection: 'row',
@@ -117,7 +98,7 @@ const styles = StyleSheet.create({
     text: {
         marginTop: 5,
         marginBottom: 5,
-        color: '#ee00ee7e',
+        color: '#333',
     },
 });
 

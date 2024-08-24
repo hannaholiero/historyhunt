@@ -13,6 +13,7 @@ import CreateHuntMapScreen from './src/screens/CreateHuntMapScreen';
 import ConfirmHuntScreen from './src/screens/ConfirmHuntScreen';
 import InGameScreen from './src/screens/InGameScreen';
 import PhotoScreen from './src/screens/PhotoScreen';
+import FinishedHuntScreen from './src/screens/FinishedHuntScreen';
 
 const Stack = createStackNavigator();
 
@@ -41,6 +42,7 @@ const App = () => {
         <Stack.Screen name="ConfirmHunt" component={ConfirmHuntScreen} />
         <Stack.Screen name="InGame" component={InGameScreen} />
         <Stack.Screen name="TakePhoto" component={PhotoScreen} />
+        <Stack.Screen name="FinishedHunt" component={FinishedHuntScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

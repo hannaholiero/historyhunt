@@ -1,57 +1,38 @@
-import { Camera, CameraType, useCameraPermissions } from 'expo-camera';
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
+import React, { useState } from 'react';
+import { View, Button, Image, StyleSheet, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
-const PhotoScreen = ({ navigation }) => {
-    const [hasPermission, setHasPermission] = useState(null);
-    const [camera, setCamera] = useState(null);
-    const [type, setType] = useState(CameraType.back);
-    const [permission, requestPermission] = useCameraPermissions();
+const PhotoScreen = ({ navigation, route }) => {
+    const [image, setImage] = useState(null);
+    const { hunt } = route.params;
 
-    useEffect(() => {
-        (async () => {
-            const { status } = await requestPermission();
-            setHasPermission(status === 'granted');
-        })();
-    }, []);
+    const pickImage = async () => {
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
-    if (hasPermission === null) {
-        return <View />;
-    }
-
-    if (hasPermission === false) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.message}>We need your permission to show the camera</Text>
-                <Button onPress={requestPermission} title="Grant permission" />
-            </View>
-        );
-    }
-
-    const takePicture = async () => {
-        if (camera) {
-            const photo = await camera.takePictureAsync();
-            console.log(photo);
-            navigation.goBack(); // Navigerar tillbaka till föregående skärm efter att bilden tagits
+        if (permissionResult.granted === false) {
+            Alert.alert('Permission Denied', 'Permission to access camera roll is required!');
+            return;
         }
-    };
 
-    const toggleCameraFacing = () => {
-        setType((current) => (current === CameraType.back ? CameraType.front : CameraType.back));
+        let result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+            navigation.navigate('FinishedHunt', {
+                hunt: hunt,  // Skicka tillbaka hunt-objektet
+                photoUri: result.assets[0].uri,
+            });
+        }
     };
 
     return (
         <View style={styles.container}>
-            <Camera style={styles.camera} type={type} ref={(ref) => setCamera(ref)}>
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-                        <Text style={styles.text}>Flip Camera</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={takePicture}>
-                        <Text style={styles.text}>Take Photo</Text>
-                    </TouchableOpacity>
-                </View>
-            </Camera>
+            <Button title="Take Photo" onPress={pickImage} />
+            {image && <Image source={{ uri: image }} style={styles.image} />}
         </View>
     );
 };
@@ -60,29 +41,12 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-    },
-    message: {
-        textAlign: 'center',
-        paddingBottom: 10,
-    },
-    camera: {
-        flex: 1,
-    },
-    buttonContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: 'transparent',
-        margin: 64,
-    },
-    button: {
-        flex: 1,
-        alignSelf: 'flex-end',
         alignItems: 'center',
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
+    image: {
+        width: 200,
+        height: 200,
+        marginTop: 20,
     },
 });
 
