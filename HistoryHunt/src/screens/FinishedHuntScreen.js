@@ -4,6 +4,9 @@ import { ref, remove, set } from 'firebase/database';  // Korrekt import av set
 import { database } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { Marker } from 'react-native-maps';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+import CustomButton from '../components/common/Button';
 
 const FinishedHuntScreen = ({ route, navigation }) => {
     const { hunt, photoUri } = route.params;
@@ -45,7 +48,7 @@ const FinishedHuntScreen = ({ route, navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <ScreenLayout title="GRATTIS!">
             <MapView
                 style={styles.map}
                 initialRegion={{
@@ -61,10 +64,10 @@ const FinishedHuntScreen = ({ route, navigation }) => {
                     title={hunt.huntTitle}
                 />
             </MapView>
-            <Text style={styles.congratsText}>You finished the hunt!</Text>
+            <Text style={styles.congratsText}>Du klarade hunten!</Text>
             {photoUri && <Image source={{ uri: photoUri }} style={styles.image} />}
-            <Button title="Complete Hunt" onPress={handleCompleteHunt} />
-        </View>
+            <CustomButton title="Slutför" onPress={handleCompleteHunt} />
+        </ScreenLayout>
     );
 };
 

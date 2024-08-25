@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
-import Button from '../components/CustomButton';
+import Button from '../components/common/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, set } from 'firebase/database';
 import { database } from '../../firebaseConfig';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const CreateHuntScreen = ({ navigation }) => {
     const [huntTitle, setHuntTitle] = useState('');
@@ -60,26 +62,28 @@ const CreateHuntScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Hunt Title</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Enter hunt title"
-                value={huntTitle}
-                onChangeText={setHuntTitle}
-            />
+        <ScreenLayout title="Skapa ny hunt">
+            <Card>
+                <Text style={styles.label}>Namn på hunt</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Kanske 'solnedgången på Röda sten'?"
+                    value={huntTitle}
+                    onChangeText={setHuntTitle}
+                />
 
-            <Text style={styles.label}>Estimated Time (minutes)</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Enter estimated time"
-                value={estimatedTime}
-                onChangeText={setEstimatedTime}
-                keyboardType="numeric"
-            />
+                <Text style={styles.label}>Beräknad tid (minuter)</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Hur lång tid kan det ta? 5 minuter? 50?"
+                    value={estimatedTime}
+                    onChangeText={setEstimatedTime}
+                    keyboardType="numeric"
+                />
 
-            <Button title="Next" onPress={handleNextStep} />
-        </View>
+                <Button title="FORTSÄTT" onPress={handleNextStep} />
+            </Card>
+        </ScreenLayout>
     );
 };
 
@@ -95,13 +99,13 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     input: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        marginBottom: 16,
-        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.primary800,
+        padding: Spacing.medium,
+        marginBottom: Spacing.large,
+        fontSize: Typography.bodyText.fontSize,
+        fontWeight: Typography.bodyText.fontWeight,
+        color: Typography.bodyText.color,
     },
 });
 

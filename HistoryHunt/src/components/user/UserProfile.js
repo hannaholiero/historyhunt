@@ -1,7 +1,7 @@
 // src/components/UserProfile.js
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { Colors } from '../constants/styles'; // Importera dina färger
+import { Colors } from '../../constants/styles'; // Importera dina färger
 
 const UserProfile = ({ username, image }) => (
     <View style={styles.profileContainer}>

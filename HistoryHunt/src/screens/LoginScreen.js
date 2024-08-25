@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
+import { View, TextInput, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import FormContainer from '../components/FormContainer';
-import CustomButton from '../components/CustomButton';
-import { Colors } from '../constants/styles';
+import CustomButton from '../components/common/Button';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = React.useState('Test3@test.test');
@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }) => {
             );
 
             const users = response.data;
-            console.log('Users fetched:', users); // Logga alla användare
+            console.log('Users fetched:', users);
 
             let userFound = false;
 
@@ -38,11 +38,11 @@ const LoginScreen = ({ navigation }) => {
 
                     if (userEmail === email.trim().toLowerCase() && userPassword === password) {
                         userFound = true;
-                        const firstname = userData.firstname || 'Unknown'; // Försäkra oss om att firstname alltid har ett värde
+                        const firstname = userData.firstname || 'Unknown';
 
                         await AsyncStorage.setItem('email', email);
-                        await AsyncStorage.setItem('userId', userId); // Spara användar-ID
-                        await AsyncStorage.setItem('firstname', firstname); // Spara förnamnet
+                        await AsyncStorage.setItem('userId', userId);
+                        await AsyncStorage.setItem('firstname', firstname);
 
                         console.log('Login successful:', firstname);
                         navigation.navigate('Home');
@@ -64,27 +64,52 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
-
     return (
-        <View style={styles.container}>
-            <FormContainer
-                fields={[
-                    { placeholder: 'Enter your email', value: email, onChangeText: setEmail, keyboardType: 'email-address' },
-                    { placeholder: 'Enter your password', value: password, onChangeText: setPassword, secureTextEntry: true },
-                ]}
-            />
-            <CustomButton title="Login" onPress={handleLogin} />
-            <CustomButton title="Don't have an account? Sign up" onPress={() => navigation.navigate('Signup')} />
-        </View>
+
+        <ScreenLayout title="Login">
+            <Card>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+                <View style={styles.buttonRow}>
+                    <CustomButton title="Login" onPress={handleLogin} style={styles.button} />
+                    <CustomButton title="Sign up" onPress={() => navigation.navigate('Signup')} style={styles.button} />
+                </View>
+            </Card>
+        </ScreenLayout>
+
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    input: {
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.primary800,
+        padding: Spacing.medium,
+        marginBottom: Spacing.large,
+        fontSize: Typography.bodyText.fontSize,
+        fontWeight: Typography.bodyText.fontWeight,
+        color: Typography.bodyText.color,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between', // För att fördela utrymme jämnt mellan knapparna
+        width: '100%',
+    },
+    button: {
         flex: 1,
-        justifyContent: 'center',
-        padding: 16,
-        backgroundColor: Colors.primary100,
+        marginHorizontal: Spacing.small, // Lägg till lite utrymme mellan knapparna
     },
 });
 

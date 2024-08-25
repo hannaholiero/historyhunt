@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../constants/styles';
+import { Colors } from '../../constants/styles';
 
 const HuntItem = ({ title }) => (
     <View style={styles.huntItem}>

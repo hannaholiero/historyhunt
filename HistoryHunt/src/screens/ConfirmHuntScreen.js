@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, Button, StyleSheet, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import CustomButton from '../components/common/Button';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const ConfirmHuntScreen = ({ route, navigation }) => {
     const { hunt } = route.params || {}; // Om hunt är undefined, sätt det som tomt objekt
@@ -34,14 +37,10 @@ const ConfirmHuntScreen = ({ route, navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>CONFIRM HUNT</Text>
-            <Text style={styles.subTitle}>Du valde: {hunt.huntTitle}</Text>
+        <ScreenLayout title="Bekräfta hunt">
             <View style={styles.huntInfo}>
-                <Image source={{ uri: hunt.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
-                <View>
-                    <Text style={styles.huntTitle}>{hunt.huntTitle}</Text>
-                </View>
+                <Text style={Typography.header2}>Du valde: {hunt.huntTitle}</Text>
+
             </View>
 
             {hunt.location ? (
@@ -54,15 +53,15 @@ const ConfirmHuntScreen = ({ route, navigation }) => {
                         longitudeDelta: 0.01,
                     }}
                 >
-                    <Marker coordinate={hunt.location} title="Hunt Location" />
+                    <Marker coordinate={hunt.location} title="Din markering" />
                 </MapView>
             ) : (
                 <Text style={styles.errorText}>Location not found</Text>
             )}
 
-            <Text style={styles.estimatedTime}>Estimerad tid: {hunt.estimatedTime} minuter</Text>
-            <Button title="Confirm!" onPress={handleConfirm} />
-        </View>
+            <Text style={styles.estimatedTime}>Beräknad tid att slutföra: {hunt.estimatedTime} minuter</Text>
+            <CustomButton title="Nu kör vi!" onPress={handleConfirm} />
+        </ScreenLayout>
     );
 };
 
@@ -81,20 +80,23 @@ const styles = StyleSheet.create({
     subTitle: {
         fontSize: 18,
         marginBottom: 10,
+        marginRight: 10, // Lägg till lite utrymme mellan text och bild
     },
     huntInfo: {
-        flexDirection: 'row',
+        flexDirection: 'row', // För att lägga elementen på samma rad
         alignItems: 'center',
+        justifyContent: 'center', // Centrerar innehållet horisontellt
         marginBottom: 20,
     },
     huntImage: {
         width: 40,
         height: 40,
-        marginRight: 10,
+        marginLeft: 10, // Lägg till lite utrymme mellan text och bild
     },
     huntTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
+        marginRight: 10, // Lägg till lite utrymme mellan titeln och bilden
     },
     map: {
         width: 200,

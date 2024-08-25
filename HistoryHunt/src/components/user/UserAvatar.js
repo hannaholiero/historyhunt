@@ -74,9 +74,8 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#ccc',
         borderWidth: 5,               // Borderns tjocklek
-        borderColor: '#ee00ee7e'
+        borderColor: '#3a4a33'
     },
     avatar: {
         width: 150,

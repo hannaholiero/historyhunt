@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import UserAvatar from '../components/UserAvatar';
+import UserAvatar from '../components/user/UserAvatar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDatabase, ref, onValue } from 'firebase/database';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+
+
 
 const ProfileScreen = () => {
     const [profilePicture, setProfilePicture] = useState(null);
@@ -30,10 +34,10 @@ const ProfileScreen = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <ScreenLayout title="Ändra profilbild">
 
             <UserAvatar uri={profilePicture} onImagePicked={handleImagePicked} />
-        </View>
+        </ScreenLayout>
     );
 };
 

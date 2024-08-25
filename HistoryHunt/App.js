@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Lägg till denna rad
+import * as SplashScreen from 'expo-splash-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp } from './firebaseConfig';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -15,25 +16,50 @@ import InGameScreen from './src/screens/InGameScreen';
 import PhotoScreen from './src/screens/PhotoScreen';
 import FinishedHuntScreen from './src/screens/FinishedHuntScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import StartScreen from './src/screens/StartScreen';
+import * as Font from 'expo-font';
+import { Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
 
 const Stack = createStackNavigator();
 
 const App = () => {
-  // Lägg till denna useEffect för att rensa AsyncStorage vid uppstart
+  const [appIsReady, setAppIsReady] = useState(false);
+
   useEffect(() => {
-    const clearStorage = async () => {
+    const prepareApp = async () => {
       try {
-        await AsyncStorage.clear();
+        // Förhindra att splashscreen göms medan vi laddar resurser
+        await SplashScreen.preventAutoHideAsync();
+
+        // Ladda nödvändiga resurser (t.ex. fonter)
+        await Font.loadAsync({
+          Poppins_400Regular,
+          Poppins_700Bold,
+        });
       } catch (error) {
-        console.error('Error clearing AsyncStorage:', error);
+        console.warn('Error loading resources:', error);
+      } finally {
+        setAppIsReady(true);
+        await SplashScreen.hideAsync();
       }
     };
-    clearStorage();
+
+    prepareApp();
   }, []);
+
+  if (!appIsReady) {
+    return null; // Returnera null tills appen är redo för att förhindra rendering
+  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Start">
+        <Stack.Screen
+          name="Start"
+          component={StartScreen}
+          options={{ headerShown: false }} // Göm headern för startskärmen
+        />
+
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />

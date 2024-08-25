@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Button, Image, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+import CustomButton from '../components/common/Button';
 
 const PhotoScreen = ({ navigation, route }) => {
     const [image, setImage] = useState(null);
@@ -30,10 +33,10 @@ const PhotoScreen = ({ navigation, route }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <Button title="Take Photo" onPress={pickImage} />
+        <ScreenLayout>
+            <CustomButton title="Ta foto!" onPress={pickImage} />
             {image && <Image source={{ uri: image }} style={styles.image} />}
-        </View>
+        </ScreenLayout>
     );
 };
 

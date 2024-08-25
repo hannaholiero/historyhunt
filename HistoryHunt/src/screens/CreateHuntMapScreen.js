@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
-import Button from '../components/CustomButton';
+import Button from '../components/common/Button';
 import { ref, set } from 'firebase/database';
 import { database } from '../../firebaseConfig';
 import * as Location from 'expo-location';

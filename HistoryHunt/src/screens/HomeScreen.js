@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebaseConfig';
-import CustomButton from '../components/CustomButton';
+import CustomButton from '../components/common/Button';
 import { MaterialIcons } from '@expo/vector-icons'; // För penna-ikonen
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const HomeScreen = ({ navigation }) => {
     const [plannedHunts, setPlannedHunts] = useState([]);
@@ -71,7 +72,7 @@ const HomeScreen = ({ navigation }) => {
     const renderMedalItem = ({ item }) => (
         <TouchableOpacity
             style={styles.medalItem}
-            onPress={() => navigation.navigate('FinishedGame', {
+            onPress={() => navigation.navigate('FinishedHunt', {
                 hunt: item,
                 photoUri: item.photoUri
             })}
@@ -82,6 +83,7 @@ const HomeScreen = ({ navigation }) => {
     );
 
     return (
+
         <View style={styles.container}>
             <View style={styles.profileContainer}>
                 <TouchableOpacity onPress={handleProfilePress} style={styles.profileImageContainer}>
@@ -145,7 +147,7 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fbf5e9',
+        backgroundColor: ContainerStyles.screenContainer.backgroundColor,
         padding: 20,
     },
     profileContainer: {
@@ -164,7 +166,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         right: 0,
-        backgroundColor: '#00000099',
+        backgroundColor: Colors.primary800,
+        opacity: 0.8,
         borderRadius: 12,
         padding: 4,
     },
@@ -184,8 +187,8 @@ const styles = StyleSheet.create({
     huntItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        backgroundColor: '#f0e68c',
+        padding: 5,
+        borderWidth: 1,
         borderRadius: 8,
         marginBottom: 10,
     },
@@ -212,11 +215,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     medalsList: {
-        marginTop: 10,
+        marginTop: 5,
     },
     medalItem: {
         alignItems: 'center',
-        marginHorizontal: 10,
+        marginHorizontal: 5,
     },
     medalImage: {
         width: 80,

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Image, Alert, ScrollView, Dimensions } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import Button from '../components/CustomButton';
+import Button from '../components/common/Button';
 import { ref, push, update } from 'firebase/database';
 import { database } from '../../firebaseConfig';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+
 
 const InGameScreen = ({ route, navigation }) => {
     const { hunt, photoUri } = route.params;
@@ -60,7 +63,7 @@ const InGameScreen = ({ route, navigation }) => {
     };
 
     return (
-        <ScrollView style={styles.form}>
+        <ScrollView style={ContainerStyles.screenContainer}>
             <MapView
                 style={styles.map}
                 initialRegion={{
@@ -73,7 +76,7 @@ const InGameScreen = ({ route, navigation }) => {
             >
                 <Marker
                     coordinate={hunt.location}
-                    title="Hunt Location"
+                    title="Framme! Föreviga med en bild!"
                 />
             </MapView>
 
@@ -101,7 +104,8 @@ const styles = StyleSheet.create({
     },
     map: {
         height: 500,
-        width: Dimensions.get('window').width,
+        width: '100%',
+
     },
     actions: {
         alignItems: 'center',

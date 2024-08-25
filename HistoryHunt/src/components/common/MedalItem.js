@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Colors } from '../constants/styles';
+import { Colors } from '../../constants/styles';
 
 const MedalItem = ({ title }) => (
     <View style={styles.medalItem}>
