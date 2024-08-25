@@ -1,61 +1,59 @@
-import React, { useState } from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors, Spacing, Typography } from '../../constants/Theme';
 
 const ImagePickerComponent = ({ imageUri, onImagePicked }) => {
-    const [image, setImage] = useState(imageUri);
-
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
 
         if (!result.canceled) {
-            setImage(result.uri);
-            onImagePicked(result.uri);  // Skicka tillbaka URI:n till parent-komponenten
+            onImagePicked(result.assets[0].uri);
         }
     };
 
     return (
-        <TouchableOpacity onPress={pickImage}>
-            <View style={styles.avatarContainer}>
-                {image ? (
-                    <Image source={{ uri: image }} style={styles.avatar} />
-                ) : (
-                    <Text style={styles.text}>Välj en bild</Text>
-                )}
-            </View>
+        <TouchableOpacity onPress={pickImage} style={styles.imagePickerContainer}>
+            {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.image} />
+            ) : (
+                <Text style={styles.imagePickerText}>Välj en bild</Text>
+            )}
         </TouchableOpacity>
     );
 };
 
+
+
 const styles = StyleSheet.create({
-    avatarContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 75,
-        overflow: 'hidden',
+    imagePickerContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-
         borderWidth: 1,
-        borderColor: Colors.primary500,
-        marginBottom: Spacing.medium,
+        borderRadius: 50,
+        width: 100,
+        height: 100,
+        marginBottom: Spacing.large,
+        alignSelf: 'center',
     },
-    avatar: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 75,
+    image: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
     },
-    text: {
-        ...Typography.header2,
+    imagePickerText: {
         color: Colors.primary800,
+        fontSize: Typography.bodyText.fontSize,
+        fontWeight: Typography.bodyText.fontWeight,
         textAlign: 'center',
     },
 });
+
+
 
 export default ImagePickerComponent;

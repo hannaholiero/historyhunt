@@ -15,9 +15,10 @@ export const ScreenLayout = ({ children, title }) => {
     );
 };
 
-export const Card = ({ children, title }) => {
+
+export const Card = ({ children, title, width = '100%', height = 'auto' }) => {
     return (
-        <View style={ContainerStyles.cardContainer}>
+        <View style={[ContainerStyles.cardContainer, { width, height }]}>
             {title && <Text style={Typography.header2}>{title}</Text>}
             <View style={styles.cardContent}>
                 {children}

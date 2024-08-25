@@ -9,6 +9,7 @@ import Button from '../components/common/Button';
 import ImagePickerComponent from '../components/common/ImagePickerComponent';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
+
 const CreateHuntScreen = ({ navigation }) => {
     const [huntTitle, setHuntTitle] = useState('');
     const [estimatedTime, setEstimatedTime] = useState('');
@@ -39,7 +40,6 @@ const CreateHuntScreen = ({ navigation }) => {
 
         const huntId = Date.now().toString(); // Generera ett unikt ID för jakten
 
-        // Hämta användarens ID och förnamn från AsyncStorage
         const userId = await AsyncStorage.getItem('userId');
         const firstname = await AsyncStorage.getItem('firstname');
 
@@ -48,30 +48,25 @@ const CreateHuntScreen = ({ navigation }) => {
             return;
         }
 
-        // Använd standardbild om ingen laddas upp
-        const huntImage = imageUri || 'https://default-image-url.com'; // Byt ut mot en verklig URL för standardbild
+        const huntImage = imageUri || 'https://imgur.com/a/rgiDLb8';
 
-        // Förbered jaktdata
         const huntData = {
             huntId,
             huntTitle,
             estimatedTime,
-            huntImage,
+            huntImage,  // Se till att detta värde sparas
             createdBy: firstname,
             participants: [],
             completedBy: [],
         };
 
         try {
-            // Spara jakten i Firebase under hunts
             const newHuntRef = ref(database, `hunts/${huntId}`);
             await set(newHuntRef, huntData);
 
-            // Koppla jakten till användarens plannedHunts
             const userPlannedHuntsRef = ref(database, `users/${userId}/plannedHunts/${huntId}`);
             await set(userPlannedHuntsRef, huntData);
 
-            // Navigera till nästa skärm
             navigation.navigate('CreateHuntMap', {
                 hunt: huntData,
             });
@@ -81,9 +76,10 @@ const CreateHuntScreen = ({ navigation }) => {
         }
     };
 
+
     return (
         <ScreenLayout title="Skapa ny hunt">
-            <Card>
+            <Card width="100%">
                 <Text style={styles.label}>Namn på hunt</Text>
 
                 <TextInput
@@ -101,9 +97,9 @@ const CreateHuntScreen = ({ navigation }) => {
                     onChangeText={setEstimatedTime}
                     keyboardType="numeric"
                 />
-                <View style={styles.center}>
-                    <ImagePickerComponent imageUri={imageUri} onImagePicked={handleImagePicked} />
-                </View>
+
+                <ImagePickerComponent imageUri={imageUri} onImagePicked={handleImagePicked} />
+
                 <Button title="FORTSÄTT" onPress={handleNextStep} />
             </Card>
         </ScreenLayout>

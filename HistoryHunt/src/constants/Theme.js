@@ -1,3 +1,6 @@
+import { useFonts, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import AppLoading from 'expo-app-loading';
+
 export const Colors = {
     primary100: '#fcfcfb',
     primary500: '#6d8c60',
@@ -16,26 +19,43 @@ export const Typography = {
         fontWeight: 'bold',
         color: Colors.primary800,
         padding: 10,
+        fontFamily: 'Poppins_700Bold',
+        marginVertical: 10,
     },
     header2: {
         fontSize: 20,
         fontWeight: '500',
         color: Colors.primary800,
+        fontFamily: 'Poppins_700Bold',
+        marginVertical: 10,
+    },
+    header3: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: Colors.primary800,
+        fontFamily: 'Poppins_700',
+        marginVertical: 10,
+        textTransform: 'uppercase',
+
+
     },
     bodyText: {
         fontSize: 16,
         fontWeight: '400',
         color: Colors.primary500,
+        fontFamily: 'Poppins_400Regular',
     },
     buttonText: {
         fontSize: 18,
         fontWeight: 'bold',
         color: Colors.primary100,
+        fontFamily: 'Poppins_700Bold',
     },
     errorText: {
         fontSize: 14,
         fontWeight: '400',
         color: Colors.error500,
+        fontFamily: 'Poppins_400Regular',
     },
 };
 
@@ -68,6 +88,7 @@ export const ButtonStyles = {
         color: Colors.primary800,
         fontSize: Typography.buttonText.fontSize,
         fontWeight: Typography.buttonText.fontWeight,
+        fontFamily: Typography.buttonText.fontFamily,
     },
 };
 

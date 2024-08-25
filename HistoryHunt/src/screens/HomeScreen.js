@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebaseConfig';
 import CustomButton from '../components/common/Button';
-import { MaterialIcons } from '@expo/vector-icons'; // För penna-ikonen
+import { MaterialIcons } from '@expo/vector-icons';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const HomeScreen = ({ navigation }) => {
@@ -27,19 +27,10 @@ const HomeScreen = ({ navigation }) => {
                     const formattedPlannedHunts = Object.keys(hunts).map(huntId => ({
                         ...hunts[huntId],
                         huntId,
+                        huntImage: hunts[huntId].huntImage
                     }));
                     setPlannedHunts(formattedPlannedHunts);
                 });
-
-                // const activeHuntsRef = ref(database, `users/${storedUserId}/activeHunts`);
-                // onValue(activeHuntsRef, (snapshot) => {
-                //     const hunts = snapshot.val() || {};
-                //     const formattedActiveHunts = Object.keys(hunts).map(huntId => ({
-                //         ...hunts[huntId],
-                //         huntId,
-                //     }));
-                //     setActiveHunts(formattedActiveHunts);
-                // });
 
                 const invitationsRef = ref(database, `users/${storedUserId}/invitations`);
                 onValue(invitationsRef, (snapshot) => {
@@ -48,9 +39,8 @@ const HomeScreen = ({ navigation }) => {
                         ...invitations[inviteId],
                         inviteId,
                     }));
-                    setActiveHunts(prevState => [...prevState, ...formattedInvitations]);
+                    setActiveHunts(formattedInvitations.filter(hunt => !completedHunts.some(completedHunt => completedHunt.huntId === hunt.huntId)));
                 });
-
 
                 const completedHuntsRef = ref(database, `users/${storedUserId}/completedHunts`);
                 onValue(completedHuntsRef, (snapshot) => {
@@ -58,11 +48,11 @@ const HomeScreen = ({ navigation }) => {
                     const formattedCompletedHunts = Object.keys(hunts).map(huntId => ({
                         ...hunts[huntId],
                         huntId,
+                        huntImage: hunts[huntId].huntImage
                     }));
                     setCompletedHunts(formattedCompletedHunts);
                 });
 
-                // Hämta profilbilden
                 const profilePictureRef = ref(database, `users/${storedUserId}/profilePicture`);
                 onValue(profilePictureRef, (snapshot) => {
                     const uri = snapshot.val();
@@ -74,7 +64,7 @@ const HomeScreen = ({ navigation }) => {
         };
 
         fetchUserData();
-    }, []);
+    }, [completedHunts]);
 
     const handleProfilePress = () => {
         navigation.navigate('Profile');
@@ -85,30 +75,30 @@ const HomeScreen = ({ navigation }) => {
             style={styles.medalItem}
             onPress={() => navigation.navigate('FinishedHunt', {
                 hunt: item,
-                photoUri: item.photoUri
+                photoUri: item.huntImage || 'https://default-image-url.com'
             })}
         >
-            <Image source={{ uri: item.photoUri || 'https://picsum.photos/80' }} style={styles.medalImage} />
+            <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.medalImage} />
             <Text style={styles.medalTitle}>{item.huntTitle || "Completed Hunt"}</Text>
         </TouchableOpacity>
     );
 
     return (
-
         <View style={styles.container}>
             <View style={styles.profileContainer}>
+                <Text style={Typography.header3}>{userFirstName}</Text>
                 <TouchableOpacity onPress={handleProfilePress} style={styles.profileImageContainer}>
                     <Image style={styles.profileImage} source={{ uri: profilePicture || 'https://via.placeholder.com/150' }} />
                     <View style={styles.editIconContainer}>
                         <MaterialIcons name="edit" size={24} color="white" />
                     </View>
                 </TouchableOpacity>
-                <Text style={Typography.header1}>{userFirstName}</Text>
+
             </View>
 
             <Text style={Typography.header2}>INBJUDNINGAR</Text>
             <FlatList
-                data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName)}
+                data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName && !completedHunts.some(completedHunt => completedHunt.huntId === hunt.huntId))}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.huntItem} onPress={() => navigation.navigate('ConfirmHunt', { hunt: item })}>
                         <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
@@ -130,7 +120,6 @@ const HomeScreen = ({ navigation }) => {
                         <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
                         <View>
                             <Text style={styles.huntTitle}>{item.huntTitle || "Untitled Hunt"}</Text>
-
                         </View>
                     </TouchableOpacity>
                 )}
@@ -138,17 +127,17 @@ const HomeScreen = ({ navigation }) => {
                 style={styles.list}
             />
 
-            <CustomButton title="Create Hunt" onPress={() => navigation.navigate('CreateHunt')} />
+            <CustomButton title="Skapa hunt" onPress={() => navigation.navigate('CreateHunt')} />
 
             <View style={styles.medalsContainer}>
-                <Text style={styles.medalsTitle}>MEDALS</Text>
+                <Text style={styles.medalsTitle}>MEDALJER</Text>
                 <FlatList
                     data={completedHunts}
                     renderItem={renderMedalItem}
                     keyExtractor={(item, index) => index.toString()}
                     horizontal
                     style={styles.medalsList}
-                    initialNumToRender={3} // Begränsar initial render för bättre prestanda
+                    initialNumToRender={3}
                 />
             </View>
         </View>
@@ -162,11 +151,14 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     profileContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 20,
     },
     profileImageContainer: {
         position: 'relative',
+        marginLeft: 20
     },
     profileImage: {
         width: 100,
@@ -194,6 +186,7 @@ const styles = StyleSheet.create({
     },
     list: {
         marginBottom: 20,
+        maxHeight: 150,
     },
     huntItem: {
         flexDirection: 'row',
@@ -204,10 +197,12 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     huntImage: {
-        width: 50,
-        height: 50,
+        width: 40,
+        height: 40,
         borderRadius: 25,
         marginRight: 10,
+        borderWidth: 1,
+        padding: 10,
     },
     huntTitle: {
         fontSize: 16,
@@ -219,14 +214,15 @@ const styles = StyleSheet.create({
     },
     medalsContainer: {
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 10,
     },
     medalsTitle: {
         fontSize: 18,
         fontWeight: 'bold',
     },
     medalsList: {
-        marginTop: 5,
+        marginTop: 10,
+        minHeight: 80,
     },
     medalItem: {
         alignItems: 'center',

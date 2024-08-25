@@ -25,11 +25,14 @@ const FinishedHuntScreen = ({ route, navigation }) => {
                 return;
             }
 
-            // Ta bort jakten från plannedHunts och activeHunts
+            // Ta bort jakten från plannedHunts, activeHunts, och invitations
             const plannedHuntsRef = ref(database, `users/${userId}/plannedHunts/${hunt.huntId}`);
             const activeHuntsRef = ref(database, `users/${userId}/activeHunts/${hunt.huntId}`);
+            const invitationsRef = ref(database, `users/${userId}/invitations/${hunt.huntId}`);
+
             await remove(plannedHuntsRef);
             await remove(activeHuntsRef);
+            await remove(invitationsRef);
 
             // Lägg till jakten i completedHunts
             const completedHuntData = {
@@ -46,6 +49,7 @@ const FinishedHuntScreen = ({ route, navigation }) => {
             Alert.alert('Error', 'An error occurred while completing the hunt.');
         }
     };
+
 
     return (
         <ScreenLayout title="GRATTIS!">
