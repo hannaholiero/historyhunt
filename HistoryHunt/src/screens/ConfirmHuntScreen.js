@@ -6,12 +6,12 @@ import CustomButton from '../components/common/Button';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const ConfirmHuntScreen = ({ route, navigation }) => {
-    const { hunt } = route.params || {}; // Om hunt är undefined, sätt det som tomt objekt
+    const { hunt } = route.params || {};
 
     useEffect(() => {
         if (!hunt) {
             Alert.alert('Error', 'Hunt data is missing.');
-            navigation.goBack(); // Gå tillbaka till föregående skärm om hunt är undefined
+            navigation.goBack();
         } else {
             console.log("Received hunt in ConfirmHuntScreen:", hunt);
             console.log("Received location in ConfirmHuntScreen:", hunt.location);
@@ -80,23 +80,23 @@ const styles = StyleSheet.create({
     subTitle: {
         fontSize: 18,
         marginBottom: 10,
-        marginRight: 10, // Lägg till lite utrymme mellan text och bild
+        marginRight: 10,
     },
     huntInfo: {
-        flexDirection: 'row', // För att lägga elementen på samma rad
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center', // Centrerar innehållet horisontellt
+        justifyContent: 'center',
         marginBottom: 20,
     },
     huntImage: {
         width: 40,
         height: 40,
-        marginLeft: 10, // Lägg till lite utrymme mellan text och bild
+        marginLeft: 10,
     },
     huntTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginRight: 10, // Lägg till lite utrymme mellan titeln och bilden
+        marginRight: 10,
     },
     map: {
         width: 200,

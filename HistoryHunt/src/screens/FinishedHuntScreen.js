@@ -25,7 +25,7 @@ const FinishedHuntScreen = ({ route, navigation }) => {
                 return;
             }
 
-            // Ta bort jakten från plannedHunts, activeHunts, och invitations
+
             const plannedHuntsRef = ref(database, `users/${userId}/plannedHunts/${hunt.huntId}`);
             const activeHuntsRef = ref(database, `users/${userId}/activeHunts/${hunt.huntId}`);
             const invitationsRef = ref(database, `users/${userId}/invitations/${hunt.huntId}`);
@@ -34,7 +34,7 @@ const FinishedHuntScreen = ({ route, navigation }) => {
             await remove(activeHuntsRef);
             await remove(invitationsRef);
 
-            // Lägg till jakten i completedHunts
+
             const completedHuntData = {
                 ...hunt,
                 photoUri, // Spara den tagna bilden

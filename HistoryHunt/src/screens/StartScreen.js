@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, Image, StyleSheet } from 'react-native';
 import ButtonComponent from '../components/common/Button';
-import StartLogo from '../../assets/StartLogo.png'; // Justera sökvägen 
+import StartLogo from '../../assets/StartLogo.png';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
@@ -21,10 +21,10 @@ export default StartScreen;
 
 const styles = StyleSheet.create({
     logo: {
-        width: 500,  // Ställ in bredden som du vill ha
-        height: 500,  // Ställ in höjden som du vill ha
-        resizeMode: 'contain', // Så att bilden skalar proportionerligt
-        alignSelf: 'center', // Centrerar bilden horisontellt
+        width: 500,
+        height: 500,
+        resizeMode: 'contain',
+        alignSelf: 'center',
 
     },
 });

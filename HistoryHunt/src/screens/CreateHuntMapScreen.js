@@ -63,7 +63,7 @@ const CreateHuntMapScreen = ({ navigation, route }) => {
             Alert.alert('Success', 'Hunt created successfully!');
             navigation.navigate('InvitePlayers', {
                 hunt: updatedHuntData,
-                userLocation,  // Skicka med användarens plats
+                userLocation,
             });
         } catch (error) {
             console.error('Error creating hunt:', error);
@@ -77,7 +77,7 @@ const CreateHuntMapScreen = ({ navigation, route }) => {
                 <MapView
                     style={styles.map}
                     region={region}
-                    showsUserLocation={true} // Visa användarens nuvarande position med blå pricken
+                    showsUserLocation={true} // Visa användarens nuvarande position 
                     onPress={handleMapPress}
                 >
                     {selectedLocation && (
