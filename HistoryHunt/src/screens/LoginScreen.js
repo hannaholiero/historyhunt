@@ -7,8 +7,8 @@ import { ScreenLayout, Card } from '../components/layout/Layout';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const LoginScreen = ({ navigation }) => {
-    const [email, setEmail] = React.useState('Test3@test.test');
-    const [password, setPassword] = React.useState('test');
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
 
     const handleLogin = async () => {
         try {
@@ -25,7 +25,6 @@ const LoginScreen = ({ navigation }) => {
             );
 
             const users = response.data;
-            console.log('Users fetched:', users);
 
             let userFound = false;
 
@@ -66,7 +65,7 @@ const LoginScreen = ({ navigation }) => {
 
     return (
 
-        <ScreenLayout title="Login">
+        <ScreenLayout title="Logga in">
             <Card>
                 <TextInput
                     style={styles.input}

@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
-import Button from '../components/common/Button';
+import { View, Text, TextInput, Alert, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, set } from 'firebase/database';
+import * as ImagePicker from 'expo-image-picker';
 import { database } from '../../firebaseConfig';
 import { ScreenLayout, Card } from '../components/layout/Layout';
+import Button from '../components/common/Button';
+import ImagePickerComponent from '../components/common/ImagePickerComponent';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const CreateHuntScreen = ({ navigation }) => {
     const [huntTitle, setHuntTitle] = useState('');
     const [estimatedTime, setEstimatedTime] = useState('');
+    const [imageUri, setImageUri] = useState(null);
+
+    const handleImagePicked = (uri) => {
+        setImageUri(uri);
+    };
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImageUri(result.uri);
+        }
+    };
 
     const handleNextStep = async () => {
         if (!huntTitle || !estimatedTime) {
@@ -28,8 +48,8 @@ const CreateHuntScreen = ({ navigation }) => {
             return;
         }
 
-        // Skapa en standardbild om ingen laddas upp
-        const huntImage = 'https://default-image-url';
+        // Använd standardbild om ingen laddas upp
+        const huntImage = imageUri || 'https://default-image-url.com'; // Byt ut mot en verklig URL för standardbild
 
         // Förbered jaktdata
         const huntData = {
@@ -65,6 +85,7 @@ const CreateHuntScreen = ({ navigation }) => {
         <ScreenLayout title="Skapa ny hunt">
             <Card>
                 <Text style={styles.label}>Namn på hunt</Text>
+
                 <TextInput
                     style={styles.input}
                     placeholder="Kanske 'solnedgången på Röda sten'?"
@@ -80,7 +101,9 @@ const CreateHuntScreen = ({ navigation }) => {
                     onChangeText={setEstimatedTime}
                     keyboardType="numeric"
                 />
-
+                <View style={styles.center}>
+                    <ImagePickerComponent imageUri={imageUri} onImagePicked={handleImagePicked} />
+                </View>
                 <Button title="FORTSÄTT" onPress={handleNextStep} />
             </Card>
         </ScreenLayout>
@@ -88,11 +111,6 @@ const CreateHuntScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
-    },
     label: {
         fontSize: 16,
         fontWeight: 'bold',
@@ -107,6 +125,9 @@ const styles = StyleSheet.create({
         fontWeight: Typography.bodyText.fontWeight,
         color: Typography.bodyText.color,
     },
+    center: {
+        alignSelf: 'center',
+    }
 });
 
 export default CreateHuntScreen;

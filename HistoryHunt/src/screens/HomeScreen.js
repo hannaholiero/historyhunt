@@ -31,15 +31,26 @@ const HomeScreen = ({ navigation }) => {
                     setPlannedHunts(formattedPlannedHunts);
                 });
 
-                const activeHuntsRef = ref(database, `users/${storedUserId}/activeHunts`);
-                onValue(activeHuntsRef, (snapshot) => {
-                    const hunts = snapshot.val() || {};
-                    const formattedActiveHunts = Object.keys(hunts).map(huntId => ({
-                        ...hunts[huntId],
-                        huntId,
+                // const activeHuntsRef = ref(database, `users/${storedUserId}/activeHunts`);
+                // onValue(activeHuntsRef, (snapshot) => {
+                //     const hunts = snapshot.val() || {};
+                //     const formattedActiveHunts = Object.keys(hunts).map(huntId => ({
+                //         ...hunts[huntId],
+                //         huntId,
+                //     }));
+                //     setActiveHunts(formattedActiveHunts);
+                // });
+
+                const invitationsRef = ref(database, `users/${storedUserId}/invitations`);
+                onValue(invitationsRef, (snapshot) => {
+                    const invitations = snapshot.val() || {};
+                    const formattedInvitations = Object.keys(invitations).map(inviteId => ({
+                        ...invitations[inviteId],
+                        inviteId,
                     }));
-                    setActiveHunts(formattedActiveHunts);
+                    setActiveHunts(prevState => [...prevState, ...formattedInvitations]);
                 });
+
 
                 const completedHuntsRef = ref(database, `users/${storedUserId}/completedHunts`);
                 onValue(completedHuntsRef, (snapshot) => {
@@ -92,10 +103,10 @@ const HomeScreen = ({ navigation }) => {
                         <MaterialIcons name="edit" size={24} color="white" />
                     </View>
                 </TouchableOpacity>
-                <Text style={styles.profileName}>{userFirstName}</Text>
+                <Text style={Typography.header1}>{userFirstName}</Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Active Hunts</Text>
+            <Text style={Typography.header2}>INBJUDNINGAR</Text>
             <FlatList
                 data={activeHunts.filter(hunt => hunt.createdBy !== userFirstName)}
                 renderItem={({ item }) => (
@@ -111,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
                 style={styles.list}
             />
 
-            <Text style={styles.sectionTitle}>Planned Hunts</Text>
+            <Text style={Typography.header2}>MINA HUNTS</Text>
             <FlatList
                 data={plannedHunts.filter(hunt => hunt.createdBy === userFirstName)}
                 renderItem={({ item }) => (
@@ -119,7 +130,7 @@ const HomeScreen = ({ navigation }) => {
                         <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.huntImage} />
                         <View>
                             <Text style={styles.huntTitle}>{item.huntTitle || "Untitled Hunt"}</Text>
-                            <Text style={styles.huntDetails}>Inbjuden av {item.createdBy || 'N/A'}</Text>
+
                         </View>
                     </TouchableOpacity>
                 )}

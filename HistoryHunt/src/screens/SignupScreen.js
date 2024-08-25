@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+import CustomButton from '../components/common/Button';
 
 const SignupScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
@@ -36,35 +39,37 @@ const SignupScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstname}
-                onChangeText={setFirstname}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastname}
-                onChangeText={setLastname}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            <Button title="Sign Up" onPress={handleSignup} />
-        </View>
+        <ScreenLayout title="Skapa konto">
+            <Card>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Förnamn"
+                    value={firstname}
+                    onChangeText={setFirstname}
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Efternamn"
+                    value={lastname}
+                    onChangeText={setLastname}
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Lösenord"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+                <CustomButton title="Registrera" onPress={handleSignup} />
+
+            </Card></ScreenLayout>
     );
 };
 
@@ -76,6 +81,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
+        width: 300,
         borderColor: '#ccc',
         borderWidth: 1,
         marginBottom: 12,

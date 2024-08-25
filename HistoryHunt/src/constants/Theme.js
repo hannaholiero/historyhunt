@@ -15,6 +15,7 @@ export const Typography = {
         fontSize: 24,
         fontWeight: 'bold',
         color: Colors.primary800,
+        padding: 10,
     },
     header2: {
         fontSize: 20,
