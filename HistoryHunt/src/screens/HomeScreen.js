@@ -70,18 +70,32 @@ const HomeScreen = ({ navigation }) => {
         navigation.navigate('Profile');
     };
 
+    // const renderMedalItem = ({ item }) => (
+    //     <TouchableOpacity
+    //         style={styles.medalItem}
+    //         onPress={() => navigation.navigate('FinishedHunt', {
+    //             hunt: item,
+    //             photoUri: item.huntImage || 'https://default-image-url.com'
+    //         })}
+    //     >
+    //         <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.medalImage} />
+    //         <Text style={styles.medalTitle}>{item.huntTitle || "Completed Hunt"}</Text>
+    //     </TouchableOpacity>
+    // );
+
     const renderMedalItem = ({ item }) => (
         <TouchableOpacity
             style={styles.medalItem}
             onPress={() => navigation.navigate('FinishedHunt', {
                 hunt: item,
-                photoUri: item.huntImage || 'https://default-image-url.com'
+                photoUri: item.photoUri // Skicka photoUri från completedHunts för att visa den tagna bilden
             })}
         >
             <Image source={{ uri: item.huntImage || 'https://picsum.photos/80' }} style={styles.medalImage} />
             <Text style={styles.medalTitle}>{item.huntTitle || "Completed Hunt"}</Text>
         </TouchableOpacity>
     );
+
 
     return (
         <View style={styles.container}>

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, Image, StyleSheet } from 'react-native';
 import ButtonComponent from '../components/common/Button';
-import HeaderComponent from '../components/common/HeaderComponent';
+import StartLogo from '../../assets/StartLogo.png'; // Justera sökvägen 
 import ScreenContainer from '../components/layout/ScreenContainer';
+import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
 
 const StartScreen = ({ navigation }) => {
     return (
         <ScreenContainer>
-            <HeaderComponent title="hannahs history hunt" />
+            <Image source={StartLogo} style={styles.logo} />
             <ButtonComponent
                 title="KOM IGÅNG"
                 onPress={() => navigation.navigate('Login')}
@@ -17,3 +18,14 @@ const StartScreen = ({ navigation }) => {
 };
 
 export default StartScreen;
+
+const styles = StyleSheet.create({
+    logo: {
+        width: 500,  // Ställ in bredden som du vill ha
+        height: 500,  // Ställ in höjden som du vill ha
+        resizeMode: 'contain', // Så att bilden skalar proportionerligt
+        alignSelf: 'center', // Centrerar bilden horisontellt
+
+    },
+});
+

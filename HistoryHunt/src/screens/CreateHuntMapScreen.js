@@ -1,67 +1,106 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useState, useEffect } from 'react';
+import { View, Alert, StyleSheet } from 'react-native';
 import Button from '../components/common/Button';
-import { ScreenLayout } from '../components/layout/Layout';
-import { Colors, Typography, Spacing } from '../constants/Theme';
+import { ref, set } from 'firebase/database';
+import { database } from '../../firebaseConfig';
+import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CreateHuntMapScreen = ({ route, navigation }) => {
+const CreateHuntMapScreen = ({ navigation, route }) => {
     const { hunt } = route.params;
-    const [isLoadingMap, setIsLoadingMap] = useState(true); // Ny state för laddning av karta
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [region, setRegion] = useState(null);
+    const [userLocation, setUserLocation] = useState(null);
 
-    const handleConfirmLocation = () => {
-        // Hantera bekräftelse av plats och navigera till nästa skärm
-        navigation.navigate('ConfirmHunt', { hunt });
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Permission to access location was denied.');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            });
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
+        })();
+    }, []);
+
+    const handleMapPress = (event) => {
+        const coordinate = event.nativeEvent.coordinate;
+        setSelectedLocation(coordinate);
+    };
+
+    const handleCreateHunt = async () => {
+        if (!selectedLocation) {
+            Alert.alert('Missing Information', 'Please select a location on the map.');
+            return;
+        }
+
+        try {
+            const updatedHuntData = {
+                ...hunt,
+                location: selectedLocation,
+            };
+
+            const newHuntRef = ref(database, `hunts/${hunt.huntId}`);
+            await set(newHuntRef, updatedHuntData);
+
+            // Uppdatera användarens plannedHunts med platsen
+            const userId = await AsyncStorage.getItem('userId');
+            const userPlannedHuntsRef = ref(database, `users/${userId}/plannedHunts/${hunt.huntId}`);
+            await set(userPlannedHuntsRef, updatedHuntData);
+
+            Alert.alert('Success', 'Hunt created successfully!');
+            navigation.navigate('InvitePlayers', {
+                hunt: updatedHuntData,
+                userLocation,  // Skicka med användarens plats
+            });
+        } catch (error) {
+            console.error('Error creating hunt:', error);
+            Alert.alert('Error', 'An error occurred while creating the hunt.');
+        }
     };
 
     return (
-        <ScreenLayout title="Välj startplats">
-            <View style={styles.mapContainer}>
-                {isLoadingMap && (
-                    <ActivityIndicator
-                        size="large"
-                        color={Colors.primary800}
-                        style={styles.spinner}
-                    />
-                )}
+        <View style={styles.container}>
+            {region && (
                 <MapView
                     style={styles.map}
-                    initialRegion={{
-                        latitude: hunt.location.latitude,
-                        longitude: hunt.location.longitude,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                    }}
-                    onMapReady={() => setIsLoadingMap(false)} // När kartan är klar, göm spinnaren
+                    region={region}
+                    showsUserLocation={true} // Visa användarens nuvarande position med blå pricken
+                    onPress={handleMapPress}
                 >
-                    <Marker coordinate={hunt.location} title="Startplats" />
+                    {selectedLocation && (
+                        <Marker coordinate={selectedLocation} />
+                    )}
                 </MapView>
+            )}
+            <View style={styles.buttonContainer}>
+                <Button title="Set Location & Continue" onPress={handleCreateHunt} />
             </View>
-            <Text style={styles.infoText}>Placera markören på kartan för att välja startplats.</Text>
-            <Button title="Bekräfta plats" onPress={handleConfirmLocation} />
-        </ScreenLayout>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    mapContainer: {
-        height: 300,
-        width: '100%',
-        position: 'relative', // Behövs för att placera spinnaren korrekt
+    container: {
+        flex: 1,
     },
     map: {
         flex: 1,
     },
-    spinner: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        marginLeft: -25, // För att centrera spinnaren
-        marginTop: -25,  // För att centrera spinnaren
-    },
-    infoText: {
-        ...Typography.bodyText,
-        marginVertical: Spacing.medium,
+    buttonContainer: {
+        padding: 20,
     },
 });
 

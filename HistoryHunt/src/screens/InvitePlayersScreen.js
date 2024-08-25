@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, Alert, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ref, set } from 'firebase/database';
 import { database } from '../../firebaseConfig';
-import CustomButton from '../components/common/Button';
 import { ScreenLayout, Card, CardContainer } from '../components/layout/Layout';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
+import CustomButton from '../components/common/Button';
 
 const InvitePlayersScreen = ({ navigation, route }) => {
     const { hunt, userLocation } = route.params;
     const [players, setPlayers] = useState([]);
     const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [loading, setLoading] = useState(true); // Lägg till laddningsstatus
 
     useEffect(() => {
-        console.log("Received hunt in InvitePlayersScreen:", hunt);
-        console.log("Received userLocation in InvitePlayersScreen:", userLocation);
         fetchPlayers();
     }, []);
 
@@ -34,6 +33,8 @@ const InvitePlayersScreen = ({ navigation, route }) => {
         } catch (error) {
             console.error('Error fetching players:', error);
             Alert.alert('Error', 'An error occurred while fetching players.');
+        } finally {
+            setLoading(false); // Stäng av laddningsstatus
         }
     };
 
@@ -86,17 +87,24 @@ const InvitePlayersScreen = ({ navigation, route }) => {
         </TouchableOpacity>
     );
 
+    if (loading) {
+        return (
+            <ScreenLayout title="Bjud in">
+                <ActivityIndicator size="large" color={Colors.primary800} />
+            </ScreenLayout>
+        );
+    }
+
     return (
         <ScreenLayout title="Bjud in">
-            <CardContainer>
-                <FlatList
-                    data={players}
-                    renderItem={renderPlayerItem}
-                    keyExtractor={(item) => item.id}
-                    style={styles.list}
-                />
-                <CustomButton title="Bjud in" onPress={invitePlayers} />
-            </CardContainer>
+            <FlatList
+                data={players}
+                renderItem={renderPlayerItem}
+                keyExtractor={(item) => item.id}
+                ListFooterComponent={
+                    <CustomButton title="Invite" onPress={invitePlayers} />
+                }
+            />
         </ScreenLayout>
     );
 };
@@ -104,19 +112,19 @@ const InvitePlayersScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
     list: {
         flex: 1,
-        marginBottom: Spacing.medium,
+        marginBottom: 20,
     },
     playerItem: {
         flexDirection: 'row',
-        alignItems: 'left',
-
-        padding: Spacing.medium,
-        borderRadius: Spacing.small,
-        marginBottom: Spacing.medium,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+        borderWidth: 1,
+        borderRadius: 8,
+        marginBottom: 10,
     },
     selectedPlayerItem: {
-        borderWidth: 1,
-
+        backgroundColor: '#c0c0c0',
     },
 });
 

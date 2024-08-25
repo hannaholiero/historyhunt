@@ -1,54 +1,79 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Text, Image, Alert, ScrollView, Dimensions } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Text, Image, Alert, Dimensions } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 import Button from '../components/common/Button';
 import { ref, push, update } from 'firebase/database';
 import { database } from '../../firebaseConfig';
-import { ScreenLayout, Card } from '../components/layout/Layout';
+import { ScreenLayout } from '../components/layout/Layout';
 import { ContainerStyles, Typography, Spacing, Colors } from '../constants/Theme';
-
 
 const InGameScreen = ({ route, navigation }) => {
     const { hunt, photoUri } = route.params;
+    const [userLocation, setUserLocation] = useState(null);
     const [photos, setPhotos] = useState(photoUri ? [photoUri] : []);
+    const [missionCompleted, setMissionCompleted] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission to access location was denied');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
+
+            // Följ användarens rörelse i realtid
+            Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.High,
+                    timeInterval: 1000,
+                    distanceInterval: 1,
+                },
+                (newLocation) => {
+                    setUserLocation({
+                        latitude: newLocation.coords.latitude,
+                        longitude: newLocation.coords.longitude,
+                    });
+                }
+            );
+        })();
+    }, []);
 
     const handleCompleteMission = async () => {
         if (!missionCompleted) {
             try {
                 setMissionCompleted(true);
 
-                // Hämta aktuellt datum och tid
                 const timestamp = new Date().toISOString();
-
-                // Hämta användarens förnamn (vi antar att det redan finns sparat i AsyncStorage)
                 const firstname = await AsyncStorage.getItem('firstname');
-
-                // Hämta huntId från hunt-objektet
                 const huntId = hunt.huntId;
 
-                // Kontrollera att huntId finns
                 if (!huntId) {
                     Alert.alert('Error', 'Hunt ID is missing.');
                     return;
                 }
 
-                // Spara varje foto tillsammans med användarens data i Firebase
                 for (const photoUri of photos) {
                     const newPhotoRef = push(ref(database, `hunts/${huntId}/photos`));
                     await update(newPhotoRef, {
                         user: firstname,
-                        timestamp: timestamp,
-                        photoUri: photoUri,
-                        location: hunt.location,  // Spara platsdata för varje foto
+                        timestamp,
+                        photoUri,
+                        location: hunt.location,
                     });
                 }
 
                 Alert.alert("Mission Completed", "Congratulations! You've completed the mission.");
 
-                // Navigera till FinishGameScreen med hunt och photoUri
                 navigation.navigate('FinishGame', {
-                    hunt: { ...hunt, huntId },  // Skicka hela hunt-objektet inklusive huntId
-                    photoUri: photos[0],  // Om det bara är ett foto
+                    hunt: { ...hunt, huntId },
+                    photoUri: photos[0],
                 });
             } catch (error) {
                 console.error("Error saving mission data:", error);
@@ -57,13 +82,12 @@ const InGameScreen = ({ route, navigation }) => {
         }
     };
 
-
     const takeImageHandler = () => {
         navigation.navigate('TakePhoto', { hunt });
     };
 
     return (
-        <ScrollView style={ContainerStyles.screenContainer}>
+        <ScreenLayout title="In Game">
             <MapView
                 style={styles.map}
                 initialRegion={{
@@ -74,6 +98,16 @@ const InGameScreen = ({ route, navigation }) => {
                 }}
                 showsUserLocation={true}
             >
+                {userLocation && (
+                    <Polyline
+                        coordinates={[
+                            { latitude: userLocation.latitude, longitude: userLocation.longitude },
+                            { latitude: hunt.location.latitude, longitude: hunt.location.longitude },
+                        ]}
+                        strokeColor={Colors.error500}
+                        strokeWidth={2}
+                    />
+                )}
                 <Marker
                     coordinate={hunt.location}
                     title="Framme! Föreviga med en bild!"
@@ -94,18 +128,14 @@ const InGameScreen = ({ route, navigation }) => {
                 </View>
                 <Button title="Complete Mission" onPress={handleCompleteMission} />
             </View>
-        </ScrollView>
+        </ScreenLayout>
     );
 };
 
 const styles = StyleSheet.create({
-    form: {
-        flex: 1,
-    },
     map: {
         height: 500,
-        width: '100%',
-
+        width: Dimensions.get('window').width,
     },
     actions: {
         alignItems: 'center',
