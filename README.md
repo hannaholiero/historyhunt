@@ -5,7 +5,6 @@ Hannah's History Hunt är en interaktiv mobilapp där användare kan skapa och d
 ## **Innehållsförteckning**
 - [Funktioner](#funktioner)
 - [Installation](#installation)
-- [Användning](#användning)
 - [Tekniker](#tekniker)
 - [Struktur](#struktur)
 
