@@ -8,8 +8,6 @@ Hannah's History Hunt är en interaktiv mobilapp där användare kan skapa och d
 - [Användning](#användning)
 - [Tekniker](#tekniker)
 - [Struktur](#struktur)
-- [Planering och Arbetsprocess](#planering-och-arbetsprocess)
-- [Framtida Utveckling](#framtida-utveckling)
 
 ## **Funktioner**
 - **Användarautentisering:** Registrera och logga in med e-post och lösenord via Firebase Authentication.
